@@ -1,35 +1,107 @@
-import { ActivityType, IncomeEntry, PeriodSummary, UserProfile } from './types';
+import {
+  ActivityType, IncomeEntry, InvoiceLine, LineCategory,
+  LEGACY_CATEGORY_TO_LINE, PeriodSummary, UserProfile,
+} from './types';
 
-// Social charges rates 2024
-const SOCIAL_RATES: Record<ActivityType, number> = {
-  services: 0.231,  // BNC professions libérales
-  sales: 0.123,     // Commerce / vente de marchandises
-  mixed: 0.177,     // Moyenne pondérée approximative
+// ─── Rates ────────────────────────────────────────────────────────────────────
+
+// Per-line URSSAF social charge rates
+const LINE_SOCIAL_RATES: Record<LineCategory, number> = {
+  services: 0.22,   // Prestations de services
+  sales:    0.123,  // Vente de marchandises
+};
+const LINE_VL_RATES: Record<LineCategory, number> = {
+  services: 0.022,
+  sales:    0.01,
 };
 
-// Versement libératoire rates
+// Legacy single-rate fallback (activity-type based)
+const SOCIAL_RATES: Record<ActivityType, number> = {
+  services: 0.22,
+  sales:    0.123,
+  mixed:    0.177,
+};
 const VL_RATES: Record<ActivityType, number> = {
   services: 0.022,
-  sales: 0.01,
-  mixed: 0.016,
+  sales:    0.01,
+  mixed:    0.016,
 };
 
-// Revenue thresholds 2024
 export const THRESHOLDS: Record<ActivityType, number> = {
   services: 77700,
-  sales: 188700,
-  mixed: 77700,
+  sales:    188700,
+  mixed:    77700,
 };
 
-// ACRE: halved rates for first full year
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function isACREActive(profile: UserProfile): boolean {
   if (!profile.hasACRE || !profile.acreStartDate) return profile.hasACRE;
-  const start = new Date(profile.acreStartDate);
-  const acreEnd = new Date(start);
+  const acreEnd = new Date(profile.acreStartDate);
   acreEnd.setFullYear(acreEnd.getFullYear() + 1);
   return new Date() <= acreEnd;
 }
 
+/** Converts any entry (legacy or new) to a flat list of InvoiceLines. */
+export function getEntryLines(entry: IncomeEntry): InvoiceLine[] {
+  if (entry.lines && entry.lines.length > 0) return entry.lines;
+  // Legacy entry: synthesise one line
+  const cat: LineCategory = entry.category
+    ? LEGACY_CATEGORY_TO_LINE[entry.category]
+    : 'services';
+  return [{
+    id: 'legacy',
+    description: entry.description ?? 'Encaissement',
+    category: cat,
+    amount: entry.grossAmount,
+  }];
+}
+
+// ─── Charge calculations ───────────────────────────────────────────────────────
+
+/** Per-category charge breakdown from a set of lines. */
+export function calculateLineCharges(
+  lines: InvoiceLine[],
+  hasACRE: boolean,
+  hasVL: boolean
+): {
+  servicesCA: number;
+  salesCA: number;
+  servicesSocialCharges: number;
+  salesSocialCharges: number;
+  servicesVL: number;
+  salesVL: number;
+  totalSocialCharges: number;
+  totalVL: number;
+  total: number;
+} {
+  const acreMultiplier = hasACRE ? 0.5 : 1;
+
+  const servicesCA = lines.filter(l => l.category === 'services').reduce((s, l) => s + l.amount, 0);
+  const salesCA    = lines.filter(l => l.category === 'sales').reduce((s, l) => s + l.amount, 0);
+
+  const servicesSocialCharges = servicesCA * LINE_SOCIAL_RATES.services * acreMultiplier;
+  const salesSocialCharges    = salesCA    * LINE_SOCIAL_RATES.sales    * acreMultiplier;
+  const servicesVL            = hasVL ? servicesCA * LINE_VL_RATES.services : 0;
+  const salesVL               = hasVL ? salesCA    * LINE_VL_RATES.sales    : 0;
+
+  const totalSocialCharges = servicesSocialCharges + salesSocialCharges;
+  const totalVL = servicesVL + salesVL;
+
+  return {
+    servicesCA,
+    salesCA,
+    servicesSocialCharges,
+    salesSocialCharges,
+    servicesVL,
+    salesVL,
+    totalSocialCharges,
+    totalVL,
+    total: totalSocialCharges + totalVL,
+  };
+}
+
+/** Legacy single-amount fallback (still used in historique period rows). */
 export function calculateCharges(
   grossAmount: number,
   profile: UserProfile
@@ -37,41 +109,47 @@ export function calculateCharges(
   const acreActive = isACREActive(profile);
   const socialRate = SOCIAL_RATES[profile.activityType] * (acreActive ? 0.5 : 1);
   const vlRate = profile.hasVersementLiberatoire ? VL_RATES[profile.activityType] : 0;
-
   const socialCharges = grossAmount * socialRate;
   const incomeTax = grossAmount * vlRate;
-
-  return {
-    socialCharges,
-    incomeTax,
-    total: socialCharges + incomeTax,
-  };
+  return { socialCharges, incomeTax, total: socialCharges + incomeTax };
 }
+
+// ─── Period summary ────────────────────────────────────────────────────────────
 
 export function calculatePeriodSummary(
   entries: IncomeEntry[],
   profile: UserProfile,
   allYearEntries?: IncomeEntry[]
 ): PeriodSummary {
-  const totalGross = entries.reduce((sum, e) => sum + e.grossAmount, 0);
-  const totalNet = entries.reduce((sum, e) => sum + e.netAmount, 0);
-  const totalFees = entries.reduce((sum, e) => sum + e.platformFeeAmount, 0);
+  const totalGross = entries.reduce((s, e) => s + e.grossAmount, 0);
+  const totalNet   = entries.reduce((s, e) => s + e.netAmount,   0);
+  const totalFees  = entries.reduce((s, e) => s + e.platformFeeAmount, 0);
 
-  const { socialCharges, incomeTax } = calculateCharges(totalGross, profile);
-  const totalToSetAside = socialCharges + incomeTax;
+  // Flatten all lines across entries for per-category charges
+  const allLines = entries.flatMap(getEntryLines);
+  const acreActive = isACREActive(profile);
+  const charges = calculateLineCharges(allLines, acreActive, profile.hasVersementLiberatoire);
+
+  const totalToSetAside = charges.total;
   const netAfterCharges = totalGross - totalToSetAside;
 
   const yearEntries = allYearEntries ?? entries;
-  const yearGross = yearEntries.reduce((sum, e) => sum + e.grossAmount, 0);
-  const threshold = THRESHOLDS[profile.activityType];
+  const yearGross   = yearEntries.reduce((s, e) => s + e.grossAmount, 0);
+  const threshold   = THRESHOLDS[profile.activityType];
   const thresholdUsedPercent = Math.min((yearGross / threshold) * 100, 100);
 
   return {
     totalGross,
     totalNet,
     totalFees,
-    socialCharges,
-    incomeTax,
+    servicesCA: charges.servicesCA,
+    salesCA: charges.salesCA,
+    servicesSocialCharges: charges.servicesSocialCharges,
+    salesSocialCharges: charges.salesSocialCharges,
+    servicesVL: charges.servicesVL,
+    salesVL: charges.salesVL,
+    socialCharges: charges.totalSocialCharges,
+    incomeTax: charges.totalVL,
     totalToSetAside,
     netAfterCharges,
     thresholdUsedPercent,
@@ -79,26 +157,22 @@ export function calculatePeriodSummary(
   };
 }
 
-export function getHealthStatus(thresholdPercent: number): 'green' | 'orange' | 'red' {
-  if (thresholdPercent < 70) return 'green';
-  if (thresholdPercent < 90) return 'orange';
-  return 'red';
+// ─── Utilities ─────────────────────────────────────────────────────────────────
+
+export function getHealthStatus(pct: number): 'green' | 'orange' | 'red' {
+  return pct < 70 ? 'green' : pct < 90 ? 'orange' : 'red';
 }
 
 export function formatEur(amount: number): string {
   return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
+    style: 'currency', currency: 'EUR', maximumFractionDigits: 0,
   }).format(amount);
 }
 
 export function formatEurDecimal(amount: number): string {
   return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    style: 'currency', currency: 'EUR',
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -108,41 +182,22 @@ export function getCurrentQuarter(date: Date = new Date()): number {
 
 export function getQuarterDateRange(year: number, quarter: number): { start: Date; end: Date } {
   const startMonth = (quarter - 1) * 3;
-  return {
-    start: new Date(year, startMonth, 1),
-    end: new Date(year, startMonth + 3, 0),
-  };
+  return { start: new Date(year, startMonth, 1), end: new Date(year, startMonth + 3, 0) };
 }
 
-export function filterEntriesByPeriod(
-  entries: IncomeEntry[],
-  start: Date,
-  end: Date
-): IncomeEntry[] {
-  return entries.filter((e) => {
-    const d = new Date(e.date);
-    return d >= start && d <= end;
-  });
+export function filterEntriesByPeriod(entries: IncomeEntry[], start: Date, end: Date): IncomeEntry[] {
+  return entries.filter(e => { const d = new Date(e.date); return d >= start && d <= end; });
 }
 
 export function getDeclarationPeriodLabel(frequency: 'monthly' | 'quarterly', date: Date = new Date()): string {
-  if (frequency === 'monthly') {
-    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  }
-  const q = getCurrentQuarter(date);
-  return `T${q} ${date.getFullYear()}`;
+  if (frequency === 'monthly') return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return `T${getCurrentQuarter(date)} ${date.getFullYear()}`;
 }
 
 export function getNextDeclarationDeadline(frequency: 'monthly' | 'quarterly', now: Date = new Date()): Date {
-  if (frequency === 'monthly') {
-    // Due end of the month following the declaration period
-    return new Date(now.getFullYear(), now.getMonth() + 2, 0);
-  }
-  // Quarterly: due end of the month after the quarter closes
+  if (frequency === 'monthly') return new Date(now.getFullYear(), now.getMonth() + 2, 0);
   const q = getCurrentQuarter(now);
-  const deadlineMonth = q * 3; // Apr=3, Jul=6, Oct=9, Jan=12 (next year)
-  if (deadlineMonth === 12) {
-    return new Date(now.getFullYear() + 1, 0, 31);
-  }
+  const deadlineMonth = q * 3;
+  if (deadlineMonth === 12) return new Date(now.getFullYear() + 1, 0, 31);
   return new Date(now.getFullYear(), deadlineMonth + 1, 0);
 }

@@ -3,6 +3,16 @@ export type DeclarationFrequency = 'monthly' | 'quarterly';
 export type PaymentMethod = 'virement' | 'cheque' | 'especes' | 'stripe' | 'paypal' | 'sumup' | 'etsy' | 'autre';
 export type IncomeCategory = 'prestation' | 'consulting' | 'formation' | 'vente_produit' | 'marketplace' | 'autre';
 
+// Per-line URSSAF category (simplified for charge calculation)
+export type LineCategory = 'services' | 'sales';
+
+export interface InvoiceLine {
+  id: string;
+  description: string;
+  category: LineCategory;
+  amount: number;
+}
+
 export interface UserProfile {
   activityType: ActivityType;
   declarationFrequency: DeclarationFrequency;
@@ -16,10 +26,14 @@ export interface UserProfile {
 export interface IncomeEntry {
   id: string;
   date: string;
-  description: string;
+  // New multi-line structure
+  lines?: InvoiceLine[];
+  // Legacy fields (kept for backward compat — older entries without lines)
+  description?: string;
+  category?: IncomeCategory;
+  // Computed totals
   grossAmount: number;
   netAmount: number;
-  category: IncomeCategory;
   paymentMethod: PaymentMethod;
   platformFeeRate: number;
   platformFeeAmount: number;
@@ -35,6 +49,15 @@ export interface PeriodSummary {
   totalGross: number;
   totalNet: number;
   totalFees: number;
+  // Per-category CA
+  servicesCA: number;
+  salesCA: number;
+  // Per-category charges
+  servicesSocialCharges: number;
+  salesSocialCharges: number;
+  servicesVL: number;
+  salesVL: number;
+  // Totals
   socialCharges: number;
   incomeTax: number;
   totalToSetAside: number;
@@ -61,4 +84,14 @@ export const INCOME_CATEGORIES: Record<IncomeCategory, string> = {
   vente_produit: 'Vente de produit',
   marketplace: 'Vente marketplace',
   autre: 'Autre',
+};
+
+// Map legacy categories to line category for charge calculation
+export const LEGACY_CATEGORY_TO_LINE: Record<IncomeCategory, LineCategory> = {
+  prestation:    'services',
+  consulting:    'services',
+  formation:     'services',
+  vente_produit: 'sales',
+  marketplace:   'sales',
+  autre:         'services',
 };

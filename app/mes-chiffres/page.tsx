@@ -89,19 +89,51 @@ export default function MesChiffresPage() {
         {/* Deadline */}
         <DeadlineBanner daysLeft={daysLeft} deadline={deadline} />
 
-        {/* CA card */}
+        {/* URSSAF declaration card */}
         <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-          <div className="p-5">
-            <p className="text-muted text-xs uppercase tracking-widest mb-1">CA à déclarer</p>
-            <p className="text-4xl font-bold text-text">{formatEur(summary.totalGross)}</p>
-            <p className="text-muted text-xs mt-1">Saisissez ce chiffre sur l&apos;URSSAF</p>
-          </div>
-          <div className="border-t border-border px-5 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-muted text-xs">Charges à payer</p>
-              <p className="text-purple-light text-xl font-bold">{formatEur(summary.totalToSetAside)}</p>
+          <div className="p-5 pb-4">
+            <p className="text-muted text-xs uppercase tracking-widest mb-3">Déclaration URSSAF</p>
+
+            {/* Per-category CA rows */}
+            {summary.servicesCA > 0 && (
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-text/80 text-sm">Prestations de services</span>
+                <span className="text-text font-semibold tabular-nums">{formatEur(summary.servicesCA)}</span>
+              </div>
+            )}
+            {summary.salesCA > 0 && (
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-text/80 text-sm">Vente de marchandises</span>
+                <span className="text-text font-semibold tabular-nums">{formatEur(summary.salesCA)}</span>
+              </div>
+            )}
+
+            {/* Total CA */}
+            <div className="flex justify-between items-baseline pt-2 border-t border-border mt-1">
+              <span className="text-muted text-xs">CA total à saisir</span>
+              <span className="text-text text-2xl font-bold tabular-nums">{formatEur(summary.totalGross)}</span>
             </div>
-            <p className="text-muted text-xs text-right">Prélevées<br />automatiquement</p>
+          </div>
+
+          {/* Cotisations row */}
+          <div className="border-t border-border px-5 py-4 flex flex-col gap-1.5">
+            {summary.servicesCA > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Prestations · 22%{profile.hasACRE ? ' ACRE' : ''}</span>
+                <span className="text-text/80">{formatEur(summary.servicesSocialCharges + summary.servicesVL)}</span>
+              </div>
+            )}
+            {summary.salesCA > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Marchandises · 12,3%{profile.hasACRE ? ' ACRE' : ''}</span>
+                <span className="text-text/80">{formatEur(summary.salesSocialCharges + summary.salesVL)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-baseline pt-1.5 border-t border-border mt-0.5">
+              <span className="text-muted text-xs">Cotisations estimées</span>
+              <span className="text-purple-light text-lg font-bold tabular-nums">{formatEur(summary.totalToSetAside)}</span>
+            </div>
+            <p className="text-muted text-[10px]">Prélevées automatiquement après déclaration</p>
           </div>
         </div>
 
@@ -110,7 +142,7 @@ export default function MesChiffresPage() {
           onClick={() => setShowDetails(!showDetails)}
           className="w-full bg-surface border border-border rounded-2xl p-4 flex items-center justify-between"
         >
-          <span className="text-text font-medium text-sm">Détail du calcul</span>
+          <span className="text-text font-medium text-sm">Détail complet du calcul</span>
           {showDetails ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
         </button>
 
@@ -121,7 +153,14 @@ export default function MesChiffresPage() {
               <Line label="Frais plateformes" value={`−${formatEurDecimal(summary.totalFees)}`} dim sub="non déductibles du CA déclaré" />
             )}
             <div className="border-t border-border pt-2 mt-1">
-              <Line label={`Cotisations sociales (${getRateLabel(profile.activityType, profile.hasACRE)})`} value={formatEurDecimal(summary.socialCharges)} danger />
+              {summary.servicesCA > 0 && (
+                <Line label={`Cotis. prestations (22%${profile.hasACRE ? ' ACRE' : ''})`}
+                  value={formatEurDecimal(summary.servicesSocialCharges)} danger />
+              )}
+              {summary.salesCA > 0 && (
+                <Line label={`Cotis. marchandises (12,3%${profile.hasACRE ? ' ACRE' : ''})`}
+                  value={formatEurDecimal(summary.salesSocialCharges)} danger />
+              )}
               {profile.hasVersementLiberatoire && (
                 <Line label="Versement libératoire" value={formatEurDecimal(summary.incomeTax)} danger />
               )}
