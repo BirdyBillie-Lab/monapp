@@ -1,90 +1,74 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+// Two-segment donut: services (purple) + sales (amber)
+// Used on the dashboard for current-month CA breakdown
 
-interface DonutChartProps {
-  percent: number;       // 0–100
-  label: string;         // centre top line
-  sublabel: string;      // centre bottom line
+const CX = 80, CY = 80, R = 58, SW = 17;
+
+function polar(angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: CX + R * Math.cos(rad), y: CY + R * Math.sin(rad) };
 }
 
-const R = 72;
-const CIRCUMFERENCE = 2 * Math.PI * R;
-const GAP_DEG = 50;                          // degrees of gap at bottom
-const ARC_FRACTION = (360 - GAP_DEG) / 360; // usable arc
+function arc(startDeg: number, endDeg: number) {
+  // Clamp to avoid degenerate arcs
+  if (endDeg - startDeg >= 359.9) {
+    // Full circle: two 180° arcs
+    const top = polar(0);
+    const bot = polar(180);
+    return `M ${top.x.toFixed(2)} ${top.y.toFixed(2)} A ${R} ${R} 0 1 1 ${bot.x.toFixed(2)} ${bot.y.toFixed(2)} A ${R} ${R} 0 1 1 ${top.x.toFixed(2)} ${top.y.toFixed(2)}`;
+  }
+  const s = polar(startDeg);
+  const e = polar(endDeg);
+  const large = endDeg - startDeg > 180 ? 1 : 0;
+  return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`;
+}
 
-export default function DonutChart({ percent, label, sublabel }: DonutChartProps) {
-  const progressRef = useRef<SVGCircleElement>(null);
+interface DonutChartProps {
+  servicesCA: number;
+  salesCA: number;
+  centerLabel: string;
+  centerSub?: string;
+}
 
-  const dashTotal   = CIRCUMFERENCE;
-  const dashArc     = CIRCUMFERENCE * ARC_FRACTION;
-  const dashFilled  = dashArc * Math.min(percent / 100, 1);
-  const dashOffset  = CIRCUMFERENCE - dashFilled;
-
-  // Rotation: start at bottom-left of the gap
-  const startRotation = 90 + GAP_DEG / 2;
-
-  const color =
-    percent < 70 ? '#8B5CF6' :
-    percent < 90 ? '#F59E0B' : '#EF4444';
-
-  useEffect(() => {
-    const el = progressRef.current;
-    if (!el) return;
-    el.style.setProperty('--dash-total', String(CIRCUMFERENCE - dashArc));
-    el.style.setProperty('--dash-offset', String(dashOffset));
-    el.classList.remove('ring-animate');
-    void (el as unknown as HTMLElement).offsetWidth;
-    el.classList.add('ring-animate');
-  }, [percent]);
+export default function DonutChart({ servicesCA, salesCA, centerLabel, centerSub }: DonutChartProps) {
+  const total = servicesCA + salesCA;
+  const servicesDeg = total > 0 ? (servicesCA / total) * 360 : 0;
 
   return (
-    <div className="relative flex items-center justify-center">
-      <svg
-        width="200"
-        height="200"
-        viewBox="0 0 200 200"
-        className="overflow-visible"
-      >
+    <div className="relative" style={{ width: 160, height: 160 }}>
+      <svg width="160" height="160" viewBox="0 0 160 160" overflow="visible">
         {/* Track */}
-        <circle
-          cx="100" cy="100" r={R}
-          fill="none"
-          stroke="#2A2540"
-          strokeWidth="16"
-          strokeDasharray={`${dashArc} ${CIRCUMFERENCE}`}
-          strokeDashoffset={CIRCUMFERENCE - dashArc}
-          strokeLinecap="round"
-          transform={`rotate(${startRotation} 100 100)`}
-        />
-        {/* Progress */}
-        <circle
-          ref={progressRef}
-          cx="100" cy="100" r={R}
-          fill="none"
-          stroke={color}
-          strokeWidth="16"
-          strokeDasharray={`${dashArc} ${CIRCUMFERENCE}`}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          transform={`rotate(${startRotation} 100 100)`}
-          style={{
-            filter: `drop-shadow(0 0 8px ${color}88)`,
-            transition: 'stroke 0.5s ease',
-          }}
-        />
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#2A2540" strokeWidth={SW} />
+
+        {total === 0 ? null : salesCA === 0 ? (
+          // Services only — full purple
+          <path d={arc(0, 359.9)} fill="none" stroke="#8B5CF6" strokeWidth={SW}
+            strokeLinecap="butt"
+            style={{ filter: 'drop-shadow(0 0 7px rgba(139,92,246,0.55))' }} />
+        ) : servicesCA === 0 ? (
+          // Sales only — full amber
+          <path d={arc(0, 359.9)} fill="none" stroke="#F59E0B" strokeWidth={SW}
+            strokeLinecap="butt"
+            style={{ filter: 'drop-shadow(0 0 7px rgba(245,158,11,0.45))' }} />
+        ) : (
+          <>
+            {/* Services arc (purple) */}
+            <path d={arc(0, servicesDeg)} fill="none" stroke="#8B5CF6" strokeWidth={SW}
+              strokeLinecap="butt"
+              style={{ filter: 'drop-shadow(0 0 7px rgba(139,92,246,0.5))' }} />
+            {/* Sales arc (amber) */}
+            <path d={arc(servicesDeg, 360)} fill="none" stroke="#F59E0B" strokeWidth={SW}
+              strokeLinecap="butt"
+              style={{ filter: 'drop-shadow(0 0 5px rgba(245,158,11,0.4))' }} />
+          </>
+        )}
       </svg>
 
-      {/* Centre text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pb-4">
-        <span
-          className="text-3xl font-bold tabular-nums"
-          style={{ color }}
-        >
-          {Math.round(percent)}%
-        </span>
-        <span className="text-text text-sm font-semibold mt-0.5">{label}</span>
-        <span className="text-muted text-xs">{sublabel}</span>
+      {/* Center text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <p className="text-text font-bold text-lg tabular-nums leading-tight">{centerLabel}</p>
+        {centerSub && <p className="text-muted text-[10px] mt-0.5">{centerSub}</p>}
       </div>
     </div>
   );

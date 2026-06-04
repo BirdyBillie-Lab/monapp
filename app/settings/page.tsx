@@ -10,6 +10,7 @@ import { THRESHOLDS, getACREStatus } from '@/lib/calculations';
 const EMPTY_PROFILE: UserProfile = {
   activityType: 'services', declarationFrequency: 'monthly',
   hasACRE: false, hasVersementLiberatoire: false, onboardingComplete: false,
+  monthlyObjective: undefined,
 };
 
 export default function SettingsPage() {
@@ -51,6 +52,43 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-white">Réglages</h1>
           <p className="text-muted text-sm">Votre profil micro-entrepreneur</p>
         </div>
+
+        {/* Profil personnel */}
+        <Section title="Mon profil">
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="block text-muted text-xs uppercase tracking-widest mb-1.5">
+                Prénom (pour la salutation)
+              </label>
+              <input
+                type="text"
+                placeholder="Ex : Sophie"
+                value={form.name ?? ''}
+                onChange={e => update({ name: e.target.value || undefined })}
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-white text-sm placeholder-muted focus:border-purple transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-muted text-xs uppercase tracking-widest mb-1.5">
+                Objectif mensuel (€)
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="Ex : 4000"
+                  value={form.monthlyObjective ?? ''}
+                  onChange={e => update({ monthlyObjective: parseFloat(e.target.value) || undefined })}
+                  className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 pr-8 text-white text-sm placeholder-muted focus:border-purple transition-colors"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm">€</span>
+              </div>
+              <p className="text-muted text-[10px] mt-1 px-1">
+                Affiché sur le tableau de bord pour suivre votre progression.
+              </p>
+            </div>
+          </div>
+        </Section>
 
         {/* Activity type */}
         <Section title="Type d'activité">

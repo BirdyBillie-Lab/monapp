@@ -21,6 +21,7 @@ export interface UserProfile {
   hasVersementLiberatoire: boolean;
   onboardingComplete: boolean;
   name?: string;
+  monthlyObjective?: number;
 }
 
 export interface IncomeEntry {
