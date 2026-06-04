@@ -15,7 +15,7 @@ import {
   getCurrentQuarter,
   THRESHOLDS,
 } from '@/lib/calculations';
-import { ExternalLink, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, Info, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
 
 export default function MesChiffresPage() {
   const { profile, entries } = useStore();
@@ -73,8 +73,6 @@ export default function MesChiffresPage() {
   const { summary, label, deadline, daysLeft, previousPeriods } = data;
   const threshold = THRESHOLDS[profile.activityType];
 
-  const dlColor = daysLeft <= 7 ? 'text-danger' : daysLeft <= 14 ? 'text-warning' : 'text-purple-light';
-  const dlBg    = daysLeft <= 7 ? 'bg-danger/10 border-danger/30' : daysLeft <= 14 ? 'bg-warning/10 border-warning/30' : 'bg-purple-glow border-purple/30';
 
   const progressColor =
     summary.thresholdUsedPercent < 70 ? '#22C55E' :
@@ -89,15 +87,7 @@ export default function MesChiffresPage() {
         </div>
 
         {/* Deadline */}
-        <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${dlBg}`}>
-          <span className={`text-2xl font-bold tabular-nums ${dlColor}`}>J-{daysLeft}</span>
-          <div>
-            <p className="text-text text-sm font-semibold">
-              Déclaration avant le {deadline.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-            </p>
-            <p className="text-muted text-xs">autoentrepreneur.urssaf.fr</p>
-          </div>
-        </div>
+        <DeadlineBanner daysLeft={daysLeft} deadline={deadline} />
 
         {/* CA card */}
         <div className="bg-surface border border-border rounded-2xl overflow-hidden">
@@ -230,4 +220,67 @@ function Line({ label, value, sub, bold, dim, danger, purple, success }: {
 function getRateLabel(activityType: string, hasACRE: boolean): string {
   const rates: Record<string, string> = { services: '23,1%', sales: '12,3%', mixed: '~17,7%' };
   return `${rates[activityType] ?? '23,1%'}${hasACRE ? ' ACRE' : ''}`;
+}
+
+function DeadlineBanner({ daysLeft, deadline }: { daysLeft: number; deadline: Date }) {
+  const dateLabel = deadline.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+
+  if (daysLeft < 0) {
+    // Past deadline
+    return (
+      <div className="rounded-2xl border border-danger/40 bg-danger/8 px-4 py-3.5 flex items-start gap-3">
+        <XCircle size={18} className="text-danger mt-0.5 shrink-0" />
+        <div>
+          <p className="text-danger font-semibold text-sm">Déclaration en retard</p>
+          <p className="text-danger/70 text-xs mt-0.5 leading-relaxed">
+            Vous pouvez régulariser à tout moment sur{' '}
+            <span className="font-medium">autoentrepreneur.urssaf.fr</span> — aucune pénalité n&apos;est appliquée automatiquement.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (daysLeft === 0) {
+    // Day of deadline
+    return (
+      <div className="rounded-2xl border border-danger/40 bg-danger/8 px-4 py-3.5 flex items-start gap-3">
+        <div className="w-2 h-2 rounded-full bg-danger mt-1.5 shrink-0 health-pulse" />
+        <div>
+          <p className="text-danger font-semibold text-sm">Dernier jour pour déclarer</p>
+          <p className="text-danger/70 text-xs mt-0.5">
+            Pensez à vous connecter sur autoentrepreneur.urssaf.fr avant ce soir.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (daysLeft <= 7) {
+    // Orange warning
+    return (
+      <div className="rounded-2xl border border-warning/40 bg-warning/8 px-4 py-3.5 flex items-center gap-3">
+        <AlertTriangle size={17} className="text-warning shrink-0" />
+        <div className="flex-1">
+          <p className="text-warning font-semibold text-sm">Plus que {daysLeft} jour{daysLeft > 1 ? 's' : ''} pour déclarer</p>
+          <p className="text-warning/70 text-xs mt-0.5">Échéance le {dateLabel}</p>
+        </div>
+        <span className="text-warning font-bold text-lg tabular-nums shrink-0">J-{daysLeft}</span>
+      </div>
+    );
+  }
+
+  // > 7 days — calm / neutral
+  return (
+    <div className="rounded-2xl border border-success/25 bg-success/6 px-4 py-3.5 flex items-center gap-3">
+      <CheckCircle size={17} className="text-success shrink-0" />
+      <div className="flex-1">
+        <p className="text-text text-sm font-medium">
+          Prochaine déclaration dans <span className="text-success font-bold">{daysLeft} jours</span>
+        </p>
+        <p className="text-muted text-xs mt-0.5">Échéance le {dateLabel} · autoentrepreneur.urssaf.fr</p>
+      </div>
+      <Clock size={15} className="text-muted shrink-0" />
+    </div>
+  );
 }
