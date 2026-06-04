@@ -89,51 +89,72 @@ export default function MesChiffresPage() {
         {/* Deadline */}
         <DeadlineBanner daysLeft={daysLeft} deadline={deadline} />
 
-        {/* URSSAF declaration card */}
-        <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-          <div className="p-5 pb-4">
-            <p className="text-muted text-xs uppercase tracking-widest mb-3">Déclaration URSSAF</p>
+        {/* URSSAF declaration card — two columns */}
+        <div className="flex flex-col gap-3">
+          <p className="text-muted text-xs uppercase tracking-widest px-1">Déclaration URSSAF</p>
 
-            {/* Per-category CA rows */}
-            {summary.servicesCA > 0 && (
-              <div className="flex justify-between items-baseline mb-2">
-                <span className="text-text/80 text-sm">Prestations de services</span>
-                <span className="text-text font-semibold tabular-nums">{formatEur(summary.servicesCA)}</span>
+          {/* Two category columns */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Prestations */}
+            <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+                style={{ background: 'rgba(139,92,246,0.15)' }}>
+                🛠
               </div>
-            )}
-            {summary.salesCA > 0 && (
-              <div className="flex justify-between items-baseline mb-2">
-                <span className="text-text/80 text-sm">Vente de marchandises</span>
-                <span className="text-text font-semibold tabular-nums">{formatEur(summary.salesCA)}</span>
+              <p className="text-muted text-[11px] leading-tight">Prestations de services</p>
+              <p className="text-text font-bold text-base tabular-nums leading-none">
+                {formatEur(summary.servicesCA)}
+              </p>
+              <div className="flex flex-col gap-1 mt-auto pt-2 border-t border-border">
+                <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md w-fit"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA' }}>
+                  {profile.hasACRE ? '11%' : '22%'}
+                </span>
+                <p className="text-purple-light font-bold text-sm tabular-nums">
+                  {formatEurDecimal(summary.servicesSocialCharges + summary.servicesVL)}
+                </p>
+                <p className="text-muted text-[10px]">cotisations</p>
               </div>
-            )}
+            </div>
 
-            {/* Total CA */}
-            <div className="flex justify-between items-baseline pt-2 border-t border-border mt-1">
-              <span className="text-muted text-xs">CA total à saisir</span>
-              <span className="text-text text-2xl font-bold tabular-nums">{formatEur(summary.totalGross)}</span>
+            {/* Vente */}
+            <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+                style={{ background: 'rgba(245,159,11,0.15)' }}>
+                📦
+              </div>
+              <p className="text-muted text-[11px] leading-tight">Vente de marchandises</p>
+              <p className="text-text font-bold text-base tabular-nums leading-none">
+                {formatEur(summary.salesCA)}
+              </p>
+              <div className="flex flex-col gap-1 mt-auto pt-2 border-t border-border">
+                <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md w-fit"
+                  style={{ background: 'rgba(245,159,11,0.15)', color: '#F59E0B' }}>
+                  {profile.hasACRE ? '6,15%' : '12,3%'}
+                </span>
+                <p className="font-bold text-sm tabular-nums" style={{ color: '#F59E0B' }}>
+                  {formatEurDecimal(summary.salesSocialCharges + summary.salesVL)}
+                </p>
+                <p className="text-muted text-[10px]">cotisations</p>
+              </div>
             </div>
           </div>
 
-          {/* Cotisations row */}
-          <div className="border-t border-border px-5 py-4 flex flex-col gap-1.5">
-            {summary.servicesCA > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted">Prestations · 22%{profile.hasACRE ? ' ACRE' : ''}</span>
-                <span className="text-text/80">{formatEur(summary.servicesSocialCharges + summary.servicesVL)}</span>
-              </div>
-            )}
-            {summary.salesCA > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted">Marchandises · 12,3%{profile.hasACRE ? ' ACRE' : ''}</span>
-                <span className="text-text/80">{formatEur(summary.salesSocialCharges + summary.salesVL)}</span>
-              </div>
-            )}
-            <div className="flex justify-between items-baseline pt-1.5 border-t border-border mt-0.5">
-              <span className="text-muted text-xs">Cotisations estimées</span>
-              <span className="text-purple-light text-lg font-bold tabular-nums">{formatEur(summary.totalToSetAside)}</span>
+          {/* Total card */}
+          <div className="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-text text-sm font-semibold">Total à déclarer</p>
+              <p className="text-muted text-[10px] leading-relaxed">
+                Prélevé automatiquement<br />après déclaration
+              </p>
             </div>
-            <p className="text-muted text-[10px]">Prélevées automatiquement après déclaration</p>
+            <div className="text-right shrink-0">
+              <p className="text-text text-xl font-bold tabular-nums">{formatEur(summary.totalGross)}</p>
+              <p className="text-purple-light font-bold text-base tabular-nums">
+                {formatEurDecimal(summary.totalToSetAside)}
+              </p>
+              <p className="text-muted text-[10px]">cotisations</p>
+            </div>
           </div>
         </div>
 
