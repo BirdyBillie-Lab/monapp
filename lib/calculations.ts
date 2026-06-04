@@ -157,6 +157,43 @@ export function calculatePeriodSummary(
   };
 }
 
+// ─── ACRE status ──────────────────────────────────────────────────────────────
+
+export type AcreAlertLevel = 'none' | 'warning_3months' | 'warning_1month' | 'expired';
+
+export interface ACREStatus {
+  hasACRE: boolean;
+  isActive: boolean;
+  isExpired: boolean;
+  startDate: Date | null;
+  endDate: Date | null;
+  daysRemaining: number;
+  monthsRemaining: number;
+  alertLevel: AcreAlertLevel;
+}
+
+export function getACREStatus(profile: UserProfile): ACREStatus {
+  if (!profile.hasACRE) {
+    return { hasACRE: false, isActive: false, isExpired: false, startDate: null, endDate: null, daysRemaining: 0, monthsRemaining: 0, alertLevel: 'none' };
+  }
+  const startDate = profile.acreStartDate ? new Date(profile.acreStartDate) : new Date();
+  const endDate   = new Date(startDate);
+  endDate.setFullYear(endDate.getFullYear() + 1);
+
+  const now = new Date();
+  const daysRemaining   = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const monthsRemaining = Math.ceil(daysRemaining / 30);
+  const isActive  = daysRemaining > 0;
+  const isExpired = daysRemaining <= 0;
+
+  let alertLevel: AcreAlertLevel = 'none';
+  if (isExpired)           alertLevel = 'expired';
+  else if (daysRemaining <= 31)  alertLevel = 'warning_1month';
+  else if (daysRemaining <= 92)  alertLevel = 'warning_3months';
+
+  return { hasACRE: true, isActive, isExpired, startDate, endDate, daysRemaining, monthsRemaining, alertLevel };
+}
+
 // ─── Utilities ─────────────────────────────────────────────────────────────────
 
 export function getHealthStatus(pct: number): 'green' | 'orange' | 'red' {

@@ -11,9 +11,11 @@ import {
   filterEntriesByPeriod,
   formatEur,
   getNextDeclarationDeadline,
+  getACREStatus,
   THRESHOLDS,
 } from '@/lib/calculations';
-import { Plus, CalendarClock } from 'lucide-react';
+import { UserProfile } from '@/lib/types';
+import { Plus, CalendarClock, AlertTriangle } from 'lucide-react';
 
 const MONTH_LABELS = ['Jan','Fév','Mar','Avr','Mai','Jui','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
@@ -80,6 +82,9 @@ export default function DashboardPage() {
           <span className={`ml-auto text-xs font-bold tabular-nums ${deadlineColor}`}>J-{daysLeft}</span>
         </div>
 
+        {/* ACRE expiry alert */}
+        <AcreBanner profile={profile} />
+
         {/* Donut ring */}
         <div className="bg-surface rounded-3xl border border-border flex flex-col items-center py-6">
           <p className="text-muted text-xs uppercase tracking-widest mb-4">CA annuel {now.getFullYear()}</p>
@@ -127,6 +132,63 @@ export default function DashboardPage() {
 
       </div>
     </AppShell>
+  );
+}
+
+function AcreBanner({ profile }: { profile: UserProfile }) {
+  const status = getACREStatus(profile);
+  if (status.alertLevel === 'none') return null;
+
+  const endLabel = status.endDate
+    ? status.endDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+
+  if (status.alertLevel === 'expired') {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+        <div className="w-2 h-2 rounded-full bg-muted mt-1.5 shrink-0" />
+        <div>
+          <p className="text-text text-sm font-medium">L&apos;ACRE est terminée</p>
+          <p className="text-muted text-xs mt-0.5 leading-relaxed">
+            Depuis le {endLabel}, vos cotisations sont revenues à leur taux normal.
+            Pensez à mettre de côté davantage.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status.alertLevel === 'warning_1month') {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-warning/35 bg-warning/8 px-4 py-3">
+        <AlertTriangle size={16} className="text-warning mt-0.5 shrink-0" />
+        <div>
+          <p className="text-warning text-sm font-semibold">
+            L&apos;ACRE se termine dans {status.daysRemaining} jour{status.daysRemaining > 1 ? 's' : ''}
+          </p>
+          <p className="text-warning/70 text-xs mt-0.5 leading-relaxed">
+            À partir du {endLabel}, vos charges sociales augmenteront.
+            Anticipez dès maintenant.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // warning_3months
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-warning/25 bg-warning/6 px-4 py-3">
+      <AlertTriangle size={16} className="text-warning/80 mt-0.5 shrink-0" />
+      <div>
+        <p className="text-text text-sm font-medium">
+          L&apos;ACRE se termine dans{' '}
+          <span className="text-warning font-semibold">{status.monthsRemaining} mois</span>
+        </p>
+        <p className="text-muted text-xs mt-0.5">
+          Fin le {endLabel} — préparez-vous à mettre davantage de côté.
+        </p>
+      </div>
+    </div>
   );
 }
 

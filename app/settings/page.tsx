@@ -1,20 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { UserProfile, ActivityType, DeclarationFrequency } from '@/lib/types';
 import { Check, AlertTriangle, ChevronRight } from 'lucide-react';
-import { THRESHOLDS } from '@/lib/calculations';
+import { THRESHOLDS, getACREStatus } from '@/lib/calculations';
+
+const EMPTY_PROFILE: UserProfile = {
+  activityType: 'services', declarationFrequency: 'monthly',
+  hasACRE: false, hasVersementLiberatoire: false, onboardingComplete: false,
+};
 
 export default function SettingsPage() {
   const { profile, saveProfile } = useStore();
   const [showReset, setShowReset] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState<UserProfile>(profile ?? EMPTY_PROFILE);
+
+  // Sync once when profile loads from localStorage (initial render has profile=null)
+  useEffect(() => { if (profile) setForm(profile); }, [profile]);
 
   if (!profile) return null;
-
-  const [form, setForm] = useState<UserProfile>({ ...profile });
 
   const handleSave = () => {
     saveProfile({ ...form, onboardingComplete: true });
@@ -94,12 +101,7 @@ export default function SettingsPage() {
 
         {/* ACRE */}
         <Section title="Exonérations et options">
-          <Toggle
-            label="ACRE (Aide à la Création)"
-            description="Réduction de 50% sur vos charges la 1ère année"
-            checked={form.hasACRE}
-            onChange={(v) => update({ hasACRE: v, acreStartDate: v ? new Date().toISOString() : undefined })}
-          />
+          <AcreSection form={form} update={update} />
           <div className="h-px bg-border my-3" />
           <Toggle
             label="Versement libératoire"
@@ -232,6 +234,114 @@ function Toggle({
             ${checked ? 'translate-x-5' : 'translate-x-0'}`}
         />
       </button>
+    </div>
+  );
+}
+
+function AcreSection({
+  form,
+  update,
+}: {
+  form: UserProfile;
+  update: (p: Partial<UserProfile>) => void;
+}) {
+  const status = getACREStatus(form);
+  const startIso = form.acreStartDate
+    ? new Date(form.acreStartDate).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+
+  const handleToggle = (on: boolean) => {
+    update({
+      hasACRE: on,
+      acreStartDate: on ? (form.acreStartDate ?? new Date().toISOString()) : undefined,
+    });
+  };
+
+  const handleStartDate = (val: string) => {
+    update({ acreStartDate: val ? new Date(val).toISOString() : undefined });
+  };
+
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-4">
+      {/* Header row with toggle */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-white text-sm font-medium">ACRE (Aide à la Création)</p>
+          <p className="text-muted text-xs mt-0.5">Réduction de 50% sur vos charges la 1ère année</p>
+        </div>
+        <button
+          onClick={() => handleToggle(!form.hasACRE)}
+          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 mt-0.5
+            ${form.hasACRE ? 'bg-purple' : 'bg-surface-3'}`}
+        >
+          <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform
+            ${form.hasACRE ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
+      </div>
+
+      {/* Dates + status — visible when ACRE is on */}
+      {form.hasACRE && (
+        <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3">
+
+          {/* Start date */}
+          <div>
+            <label className="block text-muted text-xs uppercase tracking-widest mb-1.5">
+              Date de début
+            </label>
+            <input
+              type="date"
+              value={startIso}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={e => handleStartDate(e.target.value)}
+              className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-white text-sm focus:border-purple transition-colors [color-scheme:dark]"
+            />
+          </div>
+
+          {/* End date (computed) */}
+          {status.endDate && (
+            <div className="flex justify-between items-center">
+              <span className="text-muted text-sm">Date de fin</span>
+              <span className="text-white text-sm font-medium">
+                {status.endDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          )}
+
+          {/* Status badge */}
+          {status.isExpired ? (
+            <div className="flex items-center gap-2 bg-surface-2 border border-border rounded-xl px-3 py-2.5">
+              <div className="w-2 h-2 rounded-full bg-muted shrink-0" />
+              <div>
+                <p className="text-muted text-xs font-medium">ACRE terminée</p>
+                <p className="text-muted/60 text-[10px]">
+                  Les cotisations sont revenues à leur taux normal.
+                </p>
+              </div>
+            </div>
+          ) : status.alertLevel === 'warning_1month' ? (
+            <div className="flex items-center gap-2 bg-warning/8 border border-warning/30 rounded-xl px-3 py-2.5">
+              <AlertTriangle size={14} className="text-warning shrink-0" />
+              <p className="text-warning text-xs font-medium">
+                Se termine dans {status.daysRemaining} jour{status.daysRemaining > 1 ? 's' : ''}
+              </p>
+            </div>
+          ) : status.alertLevel === 'warning_3months' ? (
+            <div className="flex items-center gap-2 bg-warning/8 border border-warning/30 rounded-xl px-3 py-2.5">
+              <AlertTriangle size={14} className="text-warning shrink-0" />
+              <p className="text-warning text-xs font-medium">
+                Se termine dans {status.monthsRemaining} mois · préparez-vous
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-success/8 border border-success/25 rounded-xl px-3 py-2.5">
+              <div className="w-2 h-2 rounded-full bg-success shrink-0" />
+              <p className="text-success text-xs font-medium">
+                Active · encore {status.monthsRemaining} mois
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
