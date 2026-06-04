@@ -54,14 +54,14 @@ export default function SettingsPage() {
                 onClick={() => update({ activityType: type })}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
                   ${form.activityType === type
-                    ? 'bg-gold/15 border border-gold'
+                    ? 'bg-purple/15 border border-purple'
                     : 'bg-surface-3 border border-border'
                   }`}
               >
-                <span className={form.activityType === type ? 'text-gold font-medium text-sm' : 'text-white text-sm'}>
+                <span className={form.activityType === type ? 'text-purple font-medium text-sm' : 'text-white text-sm'}>
                   {activityLabels[type]}
                 </span>
-                {form.activityType === type && <Check size={16} className="text-gold" />}
+                {form.activityType === type && <Check size={16} className="text-purple" />}
               </button>
             ))}
           </div>
@@ -79,14 +79,14 @@ export default function SettingsPage() {
                 onClick={() => update({ declarationFrequency: freq })}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
                   ${form.declarationFrequency === freq
-                    ? 'bg-gold/15 border border-gold'
+                    ? 'bg-purple/15 border border-purple'
                     : 'bg-surface-3 border border-border'
                   }`}
               >
-                <span className={form.declarationFrequency === freq ? 'text-gold font-medium text-sm' : 'text-white text-sm'}>
+                <span className={form.declarationFrequency === freq ? 'text-purple font-medium text-sm' : 'text-white text-sm'}>
                   {freqLabels[freq]}
                 </span>
-                {form.declarationFrequency === freq && <Check size={16} className="text-gold" />}
+                {form.declarationFrequency === freq && <Check size={16} className="text-purple" />}
               </button>
             ))}
           </div>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           className={`w-full py-4 rounded-2xl font-bold text-base mb-6 transition-all
-            ${saved ? 'bg-success text-white' : 'bg-gold text-bg'}`}
+            ${saved ? 'bg-success text-white' : 'bg-purple text-white'}`}
         >
           {saved ? '✓ Enregistré !' : 'Enregistrer les modifications'}
         </button>
@@ -225,7 +225,7 @@ function Toggle({
       <button
         onClick={() => onChange(!checked)}
         className={`relative w-11 h-6 rounded-full transition-colors shrink-0
-          ${checked ? 'bg-gold' : 'bg-surface-3'}`}
+          ${checked ? 'bg-purple' : 'bg-surface-3'}`}
       >
         <div
           className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform

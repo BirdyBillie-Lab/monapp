@@ -101,7 +101,7 @@ export default function DeclarationPage() {
         {/* Deadline banner */}
         <div className={`rounded-2xl border p-4 mb-4 flex items-center gap-3
           ${daysLeft <= 7 ? 'bg-danger/10 border-danger/40' : daysLeft <= 14 ? 'bg-warning/10 border-warning/40' : 'bg-surface-2 border-border'}`}>
-          <div className={`text-2xl font-bold tabular-nums ${daysLeft <= 7 ? 'text-danger' : daysLeft <= 14 ? 'text-warning' : 'text-gold'}`}>
+          <div className={`text-2xl font-bold tabular-nums ${daysLeft <= 7 ? 'text-danger' : daysLeft <= 14 ? 'text-warning' : 'text-purple'}`}>
             J-{daysLeft}
           </div>
           <div>
@@ -125,7 +125,7 @@ export default function DeclarationPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted text-xs">Charges à payer</p>
-                <p className="text-gold text-xl font-bold">{formatEur(summary.totalToSetAside)}</p>
+                <p className="text-purple text-xl font-bold">{formatEur(summary.totalToSetAside)}</p>
               </div>
               <div className="text-right">
                 <p className="text-muted text-xs">Prélevées automatiquement</p>
@@ -178,7 +178,7 @@ export default function DeclarationPage() {
               <LineItem
                 label="Total à mettre de côté"
                 value={formatEurDecimal(summary.totalToSetAside)}
-                gold
+                purple
               />
               <LineItem
                 label="Ce qu'il vous reste"
@@ -230,7 +230,7 @@ export default function DeclarationPage() {
           href="https://www.autoentrepreneur.urssaf.fr"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base flex items-center justify-center gap-2 mb-4"
+          className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base flex items-center justify-center gap-2 mb-4"
         >
           Déclarer sur l&apos;URSSAF
           <ExternalLink size={16} />
@@ -273,7 +273,7 @@ function LineItem({
   highlight,
   muted,
   danger,
-  gold,
+  purple,
   success,
 }: {
   label: string;
@@ -282,11 +282,11 @@ function LineItem({
   highlight?: boolean;
   muted?: boolean;
   danger?: boolean;
-  gold?: boolean;
+  purple?: boolean;
   success?: boolean;
 }) {
-  const valueClass = gold
-    ? 'text-gold font-bold'
+  const valueClass = purple
+    ? 'text-purple font-bold'
     : success
     ? 'text-success font-semibold'
     : danger

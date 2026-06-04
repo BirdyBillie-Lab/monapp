@@ -91,7 +91,7 @@ export default function NewIncomePage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="bg-transparent text-5xl font-bold text-white text-center w-full placeholder-surface-3 outline-none"
-              style={{ caretColor: '#C9A84C' }}
+              style={{ caretColor: '#8B5CF6' }}
             />
           </div>
           {feeInfo.rate > 0 && grossAmount > 0 && (
@@ -118,7 +118,7 @@ export default function NewIncomePage() {
             placeholder="Ex: Mission design logo, Coaching session…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-surface-2 border border-border rounded-2xl px-4 py-3.5 text-white text-sm placeholder-muted outline-none focus:border-gold transition-colors"
+            className="w-full bg-surface-2 border border-border rounded-2xl px-4 py-3.5 text-white text-sm placeholder-muted outline-none focus:border-purple transition-colors"
           />
         </div>
 
@@ -130,7 +130,7 @@ export default function NewIncomePage() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             max={today}
-            className="w-full bg-surface-2 border border-border rounded-2xl px-4 py-3.5 text-white text-sm outline-none focus:border-gold transition-colors [color-scheme:dark]"
+            className="w-full bg-surface-2 border border-border rounded-2xl px-4 py-3.5 text-white text-sm outline-none focus:border-purple transition-colors [color-scheme:dark]"
           />
         </div>
 
@@ -144,7 +144,7 @@ export default function NewIncomePage() {
                 onClick={() => setCategory(key)}
                 className={`px-3 py-3 rounded-xl text-xs font-medium text-left transition-all
                   ${category === key
-                    ? 'bg-gold/15 border border-gold text-gold'
+                    ? 'bg-purple/15 border border-purple text-purple'
                     : 'bg-surface-2 border border-border text-muted'
                   }`}
               >
@@ -167,11 +167,11 @@ export default function NewIncomePage() {
                   onClick={() => setPaymentMethod(key)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all
                     ${paymentMethod === key
-                      ? 'bg-gold/15 border border-gold'
+                      ? 'bg-purple/15 border border-purple'
                       : 'bg-surface-2 border border-border'
                     }`}
                 >
-                  <span className={paymentMethod === key ? 'text-gold font-medium' : 'text-white'}>
+                  <span className={paymentMethod === key ? 'text-purple font-medium' : 'text-white'}>
                     {info.label}
                   </span>
                   <span className={`text-xs ${info.rate > 0 ? 'text-warning' : 'text-muted'}`}>
@@ -187,7 +187,7 @@ export default function NewIncomePage() {
         <button
           onClick={handleSubmit}
           disabled={!isValid}
-          className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-98"
+          className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-98"
         >
           Enregistrer {grossAmount > 0 ? formatEurDecimal(grossAmount) : ''}
         </button>

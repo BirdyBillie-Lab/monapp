@@ -1,270 +1,156 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
+import DonutChart from '@/components/DonutChart';
+import BarChart from '@/components/BarChart';
 import {
-  calculatePeriodSummary,
+  calculateCharges,
   filterEntriesByPeriod,
   formatEur,
-  getHealthStatus,
-  getQuarterDateRange,
-  getCurrentQuarter,
+  getNextDeclarationDeadline,
   THRESHOLDS,
 } from '@/lib/calculations';
-import { INCOME_CATEGORIES, PLATFORM_FEES } from '@/lib/types';
-import { Trash2, TrendingUp, TrendingDown, Minus, ChevronDown } from 'lucide-react';
+import { Plus, CalendarClock } from 'lucide-react';
 
-type ViewMode = 'month' | 'quarter' | 'year';
+const MONTH_LABELS = ['Jan','Fév','Mar','Avr','Mai','Jui','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
 export default function DashboardPage() {
-  const { profile, entries, deleteEntry } = useStore();
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
-
+  const { profile, entries } = useStore();
   const now = new Date();
 
-  const { periodEntries, allYearEntries, periodLabel } = useMemo(() => {
-    let start: Date, end: Date, label: string;
-
-    if (viewMode === 'month') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      label = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    } else if (viewMode === 'quarter') {
-      const q = getCurrentQuarter(now);
-      const range = getQuarterDateRange(now.getFullYear(), q);
-      start = range.start;
-      end = range.end;
-      label = `T${q} ${now.getFullYear()}`;
-    } else {
-      start = new Date(now.getFullYear(), 0, 1);
-      end = new Date(now.getFullYear(), 11, 31);
-      label = String(now.getFullYear());
-    }
-
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    const yearEnd = new Date(now.getFullYear(), 11, 31);
-
-    return {
-      periodEntries: filterEntriesByPeriod(entries, start, end),
-      allYearEntries: filterEntriesByPeriod(entries, yearStart, yearEnd),
-      periodLabel: label,
-    };
-  }, [entries, viewMode, now.getMonth(), now.getFullYear()]);
-
-  const summary = useMemo(() => {
+  const data = useMemo(() => {
     if (!profile) return null;
-    return calculatePeriodSummary(periodEntries, profile, allYearEntries);
-  }, [periodEntries, profile, allYearEntries]);
 
-  if (!profile || !summary) return null;
+    // This month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthEntries = filterEntriesByPeriod(entries, monthStart, monthEnd);
+    const monthCA = monthEntries.reduce((s, e) => s + e.grossAmount, 0);
+    const monthCharges = calculateCharges(monthCA, profile).total;
 
-  const health = getHealthStatus(summary.thresholdUsedPercent);
-  const healthColors = { green: '#22C55E', orange: '#F59E0B', red: '#EF4444' };
-  const healthLabels = { green: 'Activité saine', orange: 'Attention au plafond', red: 'Plafond proche' };
-  const healthBg = { green: 'bg-success/10 border-success/30', orange: 'bg-warning/10 border-warning/30', red: 'bg-danger/10 border-danger/30' };
-  const healthText = { green: 'text-success', orange: 'text-warning', red: 'text-danger' };
+    // Annual
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const yearEnd   = new Date(now.getFullYear(), 11, 31);
+    const yearEntries = filterEntriesByPeriod(entries, yearStart, yearEnd);
+    const yearCA = yearEntries.reduce((s, e) => s + e.grossAmount, 0);
+    const threshold = THRESHOLDS[profile.activityType];
+    const yearPct = Math.min((yearCA / threshold) * 100, 100);
 
-  const threshold = THRESHOLDS[profile.activityType];
+    // Last 6 months bar chart
+    const barData = Array.from({ length: 6 }, (_, i) => {
+      const offset = 5 - i;
+      const m = now.getMonth() - offset;
+      const y = now.getFullYear() + Math.floor(m / 12);
+      const realM = ((m % 12) + 12) % 12;
+      const s = new Date(y, realM, 1);
+      const e2 = new Date(y, realM + 1, 0);
+      const ca = filterEntriesByPeriod(entries, s, e2).reduce((sum, e) => sum + e.grossAmount, 0);
+      return { label: MONTH_LABELS[realM], value: ca };
+    });
+
+    const deadline = getNextDeclarationDeadline(profile.declarationFrequency, now);
+    const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    return { monthCA, monthCharges, yearCA, yearPct, threshold, barData, daysLeft, deadline };
+  }, [entries, profile, now.getMonth(), now.getFullYear()]);
+
+  if (!profile || !data) return null;
+
+  const { monthCA, monthCharges, yearCA, yearPct, threshold, barData, daysLeft, deadline } = data;
+
+  const deadlineColor = daysLeft <= 7 ? 'text-danger' : daysLeft <= 14 ? 'text-warning' : 'text-purple-light';
+  const deadlineBg    = daysLeft <= 7 ? 'bg-danger/10 border-danger/30' : daysLeft <= 14 ? 'bg-warning/10 border-warning/30' : 'bg-purple-glow border-purple/30';
 
   return (
     <AppShell>
-      <div className="px-4 pt-12 pb-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
-            <p className="text-muted text-sm capitalize">{periodLabel}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
-            <span className="text-gold font-bold text-sm">C</span>
-          </div>
-        </div>
+      <div className="px-4 pt-10 pb-6 flex flex-col gap-4">
 
-        {/* Period selector */}
-        <div className="flex gap-2 mb-6">
-          {(['month', 'quarter', 'year'] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all
-                ${viewMode === mode ? 'bg-gold text-bg' : 'bg-surface-2 text-muted'}`}
-            >
-              {mode === 'month' ? 'Mois' : mode === 'quarter' ? 'Trimestre' : 'Année'}
-            </button>
-          ))}
-        </div>
-
-        {/* Revenue hero card */}
-        <div className="bg-surface rounded-2xl border border-border p-5 mb-4">
-          <p className="text-muted text-xs font-medium uppercase tracking-wider mb-1">
-            Chiffre d&apos;affaires
+        {/* Status bar */}
+        <div className={`flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 ${deadlineBg}`}>
+          <CalendarClock size={15} className={deadlineColor} />
+          <p className="text-text text-xs">
+            Prochaine déclaration :{' '}
+            <span className={`font-bold ${deadlineColor}`}>
+              {deadline.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+            </span>
           </p>
-          <p className="text-4xl font-bold text-white mb-1">{formatEur(summary.totalGross)}</p>
-          {summary.totalFees > 0 && (
-            <p className="text-xs text-muted">
-              dont {formatEur(summary.totalFees)} de frais plateformes
-            </p>
-          )}
-          <div className="flex gap-4 mt-4">
-            <div>
-              <p className="text-muted text-xs">Net reçu</p>
-              <p className="text-white font-semibold">{formatEur(summary.totalNet)}</p>
-            </div>
-            <div className="w-px bg-border" />
-            <div>
-              <p className="text-muted text-xs">Après charges</p>
-              <p className="text-success font-semibold">{formatEur(summary.netAfterCharges)}</p>
-            </div>
+          <span className={`ml-auto text-xs font-bold tabular-nums ${deadlineColor}`}>J-{daysLeft}</span>
+        </div>
+
+        {/* Donut ring */}
+        <div className="bg-surface rounded-3xl border border-border flex flex-col items-center py-6">
+          <p className="text-muted text-xs uppercase tracking-widest mb-4">CA annuel {now.getFullYear()}</p>
+          <DonutChart
+            percent={yearPct}
+            label={formatEur(yearCA)}
+            sublabel={`/ ${formatEur(threshold)}`}
+          />
+
+          {/* Bar chart */}
+          <div className="w-full px-4 mt-4">
+            <p className="text-muted text-[10px] uppercase tracking-widest mb-3">6 derniers mois</p>
+            <BarChart data={barData} activeIndex={5} />
           </div>
         </div>
 
-        {/* Set aside card */}
-        <div className="bg-gold/10 border border-gold/30 rounded-2xl p-5 mb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-gold text-xs font-medium uppercase tracking-wider mb-1">
-                À mettre de côté
-              </p>
-              <p className="text-3xl font-bold text-gold">{formatEur(summary.totalToSetAside)}</p>
-              <p className="text-gold/60 text-xs mt-1">pour votre prochaine déclaration</p>
-            </div>
-            <div className="text-right">
-              <p className="text-muted text-xs">Charges sociales</p>
-              <p className="text-white text-sm font-medium">{formatEur(summary.socialCharges)}</p>
-              {profile.hasVersementLiberatoire && (
-                <>
-                  <p className="text-muted text-xs mt-1">Impôt (VL)</p>
-                  <p className="text-white text-sm font-medium">{formatEur(summary.incomeTax)}</p>
-                </>
-              )}
-            </div>
-          </div>
+        {/* Two stat cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard
+            label="Ce mois"
+            value={formatEur(monthCA)}
+            sub={now.toLocaleDateString('fr-FR', { month: 'long' })}
+            accent={false}
+          />
+          <StatCard
+            label="À mettre de côté"
+            value={formatEur(monthCharges)}
+            sub="charges estimées"
+            accent
+          />
         </div>
 
-        {/* Health indicator */}
-        <div className={`rounded-2xl border p-4 mb-4 ${healthBg[health]}`}>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-3 h-3 rounded-full health-pulse"
-              style={{ backgroundColor: healthColors[health] }}
-            />
-            <div className="flex-1">
-              <p className={`font-semibold text-sm ${healthText[health]}`}>
-                {healthLabels[health]}
-              </p>
-              <p className="text-muted text-xs mt-0.5">
-                {formatEur(allYearEntries.reduce((s, e) => s + e.grossAmount, 0))} /
-                {' '}{formatEur(threshold)} annuel
-              </p>
-            </div>
-            <p className={`text-lg font-bold ${healthText[health]}`}>
-              {Math.round(summary.thresholdUsedPercent)}%
-            </p>
-          </div>
-          {/* Threshold bar */}
-          <div className="mt-3 h-1.5 bg-black/20 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${summary.thresholdUsedPercent}%`,
-                backgroundColor: healthColors[health],
-              }}
-            />
-          </div>
-        </div>
+        {/* CTA */}
+        <Link
+          href="/income/new"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-sm text-white"
+          style={{
+            background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
+            boxShadow: '0 4px 20px rgba(139,92,246,0.35)',
+          }}
+        >
+          <Plus size={18} strokeWidth={2.5} />
+          Ajouter un encaissement
+        </Link>
 
-        {/* Recent entries */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-white font-semibold">Encaissements récents</h2>
-            <span className="text-muted text-xs">{periodEntries.length} entrée{periodEntries.length !== 1 ? 's' : ''}</span>
-          </div>
-
-          {periodEntries.length === 0 ? (
-            <div className="bg-surface-2 rounded-2xl p-8 text-center">
-              <p className="text-4xl mb-3">💸</p>
-              <p className="text-white/60 text-sm">Aucun encaissement pour cette période.</p>
-              <p className="text-muted text-xs mt-1">Appuyez sur « Encaisser » pour ajouter une entrée.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {periodEntries.slice(0, 20).map((entry) => (
-                <div key={entry.id} className="relative">
-                  <div
-                    className="bg-surface-2 rounded-2xl p-4 flex items-center gap-3 card-press"
-                    onTouchStart={() => {}}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-surface-3 flex items-center justify-center text-lg shrink-0">
-                      {getCategoryEmoji(entry.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{entry.description}</p>
-                      <p className="text-muted text-xs">
-                        {new Date(entry.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        {' · '}
-                        {INCOME_CATEGORIES[entry.category]}
-                        {entry.platformFeeRate > 0 && (
-                          <span> · {PLATFORM_FEES[entry.paymentMethod]?.label}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-white font-semibold text-sm">{formatEur(entry.grossAmount)}</p>
-                      {entry.platformFeeAmount > 0 && (
-                        <p className="text-muted text-xs">net: {formatEur(entry.netAmount)}</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => setShowDeleteId(entry.id)}
-                      className="ml-1 text-muted hover:text-danger transition-colors"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
-
-      {/* Delete confirmation modal */}
-      {showDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-surface-2 rounded-t-3xl p-6">
-            <h3 className="text-white font-bold text-lg mb-2">Supprimer cette entrée ?</h3>
-            <p className="text-muted text-sm mb-6">Cette action est irréversible.</p>
-            <div className="space-y-2">
-              <button
-                onClick={() => { deleteEntry(showDeleteId); setShowDeleteId(null); }}
-                className="w-full py-3.5 rounded-2xl bg-danger text-white font-bold"
-              >
-                Supprimer
-              </button>
-              <button
-                onClick={() => setShowDeleteId(null)}
-                className="w-full py-3.5 rounded-2xl bg-surface-3 text-white font-semibold"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }
 
-function getCategoryEmoji(cat: string): string {
-  const map: Record<string, string> = {
-    prestation: '🔧',
-    consulting: '💼',
-    formation: '📚',
-    vente_produit: '📦',
-    marketplace: '🛍️',
-    autre: '💳',
-  };
-  return map[cat] ?? '💳';
+function StatCard({
+  label, value, sub, accent,
+}: {
+  label: string; value: string; sub: string; accent: boolean;
+}) {
+  return (
+    <div
+      className="rounded-2xl border p-4 flex flex-col gap-1"
+      style={{
+        background: accent ? 'rgba(139,92,246,0.08)' : '#1E1A2E',
+        borderColor: accent ? 'rgba(139,92,246,0.35)' : '#2D2848',
+      }}
+    >
+      <p className="text-muted text-[11px] font-medium">{label}</p>
+      <p
+        className="text-xl font-bold tabular-nums"
+        style={{ color: accent ? '#A78BFA' : '#FAF5FF' }}
+      >
+        {value}
+      </p>
+      <p className="text-muted text-[10px] capitalize">{sub}</p>
+    </div>
+  );
 }

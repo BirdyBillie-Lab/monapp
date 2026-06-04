@@ -132,3 +132,17 @@ export function getDeclarationPeriodLabel(frequency: 'monthly' | 'quarterly', da
   const q = getCurrentQuarter(date);
   return `T${q} ${date.getFullYear()}`;
 }
+
+export function getNextDeclarationDeadline(frequency: 'monthly' | 'quarterly', now: Date = new Date()): Date {
+  if (frequency === 'monthly') {
+    // Due end of the month following the declaration period
+    return new Date(now.getFullYear(), now.getMonth() + 2, 0);
+  }
+  // Quarterly: due end of the month after the quarter closes
+  const q = getCurrentQuarter(now);
+  const deadlineMonth = q * 3; // Apr=3, Jul=6, Oct=9, Jan=12 (next year)
+  if (deadlineMonth === 12) {
+    return new Date(now.getFullYear() + 1, 0, 31);
+  }
+  return new Date(now.getFullYear(), deadlineMonth + 1, 0);
+}

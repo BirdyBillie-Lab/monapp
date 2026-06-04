@@ -60,7 +60,7 @@ export default function OnboardingPage() {
       {step !== 'welcome' && (
         <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-surface-3">
           <div
-            className="h-full bg-gold transition-all duration-500 ease-out"
+            className="h-full bg-purple transition-all duration-500 ease-out"
             style={{ width: `${(stepIndex / (TOTAL_STEPS - 1)) * 100}%` }}
           />
         </div>
@@ -112,11 +112,11 @@ export default function OnboardingPage() {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-      <div className="w-20 h-20 rounded-2xl bg-surface-2 border border-gold/30 flex items-center justify-center mb-8">
-        <span className="text-gold text-3xl font-bold">C</span>
+      <div className="w-20 h-20 rounded-2xl bg-surface-2 border border-purple/30 flex items-center justify-center mb-8">
+        <span className="text-purple text-3xl font-bold">C</span>
       </div>
       <h1 className="text-3xl font-bold text-white mb-3">
-        Bienvenue sur <span className="text-gold-gradient">Copilote</span>
+        Bienvenue sur <span className="text-purple-gradient">Copilote</span>
       </h1>
       <p className="text-muted text-base leading-relaxed max-w-xs mb-12">
         Votre activité de micro-entrepreneur enfin lisible, sans jargon comptable.
@@ -135,7 +135,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </div>
       <button
         onClick={onNext}
-        className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base flex items-center justify-center gap-2 active:scale-98 transition-transform"
+        className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base flex items-center justify-center gap-2 active:scale-98 transition-transform"
       >
         Commencer <ChevronRight size={18} />
       </button>
@@ -187,22 +187,22 @@ function ActivityStep({
             onClick={() => setSelected(opt.type)}
             className={`w-full p-4 rounded-2xl border text-left flex items-start gap-4 transition-all
               ${selected === opt.type
-                ? 'bg-gold/10 border-gold'
+                ? 'bg-purple/10 border-purple'
                 : 'bg-surface-2 border-border'
               }`}
           >
-            <div className={`mt-0.5 ${selected === opt.type ? 'text-gold' : 'text-muted'}`}>
+            <div className={`mt-0.5 ${selected === opt.type ? 'text-purple' : 'text-muted'}`}>
               {opt.icon}
             </div>
             <div>
-              <p className={`font-semibold text-sm ${selected === opt.type ? 'text-gold' : 'text-white'}`}>
+              <p className={`font-semibold text-sm ${selected === opt.type ? 'text-purple' : 'text-white'}`}>
                 {opt.title}
               </p>
               <p className="text-muted text-xs mt-0.5">{opt.desc}</p>
             </div>
             {selected === opt.type && (
               <div className="ml-auto">
-                <Check size={18} className="text-gold" />
+                <Check size={18} className="text-purple" />
               </div>
             )}
           </button>
@@ -211,7 +211,7 @@ function ActivityStep({
       <button
         onClick={() => selected && onNext(selected)}
         disabled={!selected}
-        className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
       >
         Continuer
       </button>
@@ -260,22 +260,22 @@ function FrequencyStep({
             onClick={() => setSelected(opt.freq)}
             className={`w-full p-4 rounded-2xl border text-left flex items-start gap-4 transition-all
               ${selected === opt.freq
-                ? 'bg-gold/10 border-gold'
+                ? 'bg-purple/10 border-purple'
                 : 'bg-surface-2 border-border'
               }`}
           >
-            <div className={`mt-0.5 ${selected === opt.freq ? 'text-gold' : 'text-muted'}`}>
+            <div className={`mt-0.5 ${selected === opt.freq ? 'text-purple' : 'text-muted'}`}>
               {opt.icon}
             </div>
             <div>
-              <p className={`font-semibold text-sm ${selected === opt.freq ? 'text-gold' : 'text-white'}`}>
+              <p className={`font-semibold text-sm ${selected === opt.freq ? 'text-purple' : 'text-white'}`}>
                 {opt.title}
               </p>
               <p className="text-muted text-xs mt-0.5">{opt.desc}</p>
             </div>
             {selected === opt.freq && (
               <div className="ml-auto">
-                <Check size={18} className="text-gold" />
+                <Check size={18} className="text-purple" />
               </div>
             )}
           </button>
@@ -284,7 +284,7 @@ function FrequencyStep({
       <button
         onClick={() => selected && onNext(selected)}
         disabled={!selected}
-        className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
       >
         Continuer
       </button>
@@ -313,7 +313,7 @@ function AcreStep({
         </p>
       </div>
       <div className="bg-surface-2 border border-border rounded-2xl p-4 mb-6 flex gap-3">
-        <Zap size={18} className="text-gold mt-0.5 shrink-0" />
+        <Zap size={18} className="text-purple mt-0.5 shrink-0" />
         <p className="text-white/60 text-xs leading-relaxed">
           Si vous avez créé votre activité récemment et étiez inscrit à Pôle Emploi,
           vous avez probablement l&apos;ACRE. Vérifiez votre email de création ou votre espace URSSAF.
@@ -328,9 +328,9 @@ function AcreStep({
             key={String(v)}
             onClick={() => setSelected(v)}
             className={`w-full p-4 rounded-2xl border text-left transition-all
-              ${selected === v ? 'bg-gold/10 border-gold' : 'bg-surface-2 border-border'}`}
+              ${selected === v ? 'bg-purple/10 border-purple' : 'bg-surface-2 border-border'}`}
           >
-            <p className={`font-semibold text-sm ${selected === v ? 'text-gold' : 'text-white'}`}>
+            <p className={`font-semibold text-sm ${selected === v ? 'text-purple' : 'text-white'}`}>
               {label}
             </p>
             <p className="text-muted text-xs mt-0.5">{sub}</p>
@@ -340,7 +340,7 @@ function AcreStep({
       <button
         onClick={() => selected !== undefined && onNext(selected)}
         disabled={selected === undefined}
-        className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
       >
         Continuer
       </button>
@@ -371,7 +371,7 @@ function VLStep({
         </p>
       </div>
       <div className="bg-surface-2 border border-border rounded-2xl p-4 mb-6 flex gap-3">
-        <BadgePercent size={18} className="text-gold mt-0.5 shrink-0" />
+        <BadgePercent size={18} className="text-purple mt-0.5 shrink-0" />
         <p className="text-white/60 text-xs leading-relaxed">
           Si vous avez coché cette option lors de la création ou via votre espace impots.gouv.fr,
           répondez oui. Sinon, dites non — l&apos;impôt sera calculé séparément.
@@ -386,9 +386,9 @@ function VLStep({
             key={String(v)}
             onClick={() => setSelected(v)}
             className={`w-full p-4 rounded-2xl border text-left transition-all
-              ${selected === v ? 'bg-gold/10 border-gold' : 'bg-surface-2 border-border'}`}
+              ${selected === v ? 'bg-purple/10 border-purple' : 'bg-surface-2 border-border'}`}
           >
-            <p className={`font-semibold text-sm ${selected === v ? 'text-gold' : 'text-white'}`}>
+            <p className={`font-semibold text-sm ${selected === v ? 'text-purple' : 'text-white'}`}>
               {label}
             </p>
             <p className="text-muted text-xs mt-0.5">{sub}</p>
@@ -398,7 +398,7 @@ function VLStep({
       <button
         onClick={() => selected !== undefined && onNext(selected)}
         disabled={selected === undefined}
-        className="w-full py-4 rounded-2xl bg-gold text-bg font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+        className="w-full py-4 rounded-2xl bg-purple text-white font-bold text-base mt-6 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
       >
         Terminer la configuration
       </button>

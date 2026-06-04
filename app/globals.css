@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bg: #0A0A0A;
-  --color-surface: #111111;
-  --color-surface-2: #1A1A1A;
-  --color-surface-3: #242424;
-  --color-gold: #C9A84C;
-  --color-gold-light: #E0C070;
-  --color-gold-dim: #8A6E2E;
-  --color-white: #F0F0F0;
-  --color-muted: #888888;
-  --color-border: #2A2A2A;
+  --color-bg: #0F0A1A;
+  --color-surface: #1E1A2E;
+  --color-surface-2: #2A2540;
+  --color-surface-3: #352F50;
+  --color-purple: #8B5CF6;
+  --color-purple-light: #A78BFA;
+  --color-purple-dim: #6D4CC4;
+  --color-purple-glow: rgba(139, 92, 246, 0.15);
+  --color-text: #FAF5FF;
+  --color-muted: #9B8EC4;
+  --color-border: #2D2848;
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
@@ -24,14 +25,13 @@
 
 html,
 body {
-  background: #0A0A0A;
-  color: #F0F0F0;
+  background: #0F0A1A;
+  color: #FAF5FF;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-/* Safe area support for iOS */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -40,63 +40,43 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Hide scrollbar but keep scroll */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Gold gradient text */
-.text-gold-gradient {
-  background: linear-gradient(135deg, #C9A84C, #E0C070);
+.text-purple-gradient {
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Number animation */
 @keyframes count-up {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.animate-count { animation: count-up 0.4s ease-out forwards; }
 
-.animate-count {
-  animation: count-up 0.4s ease-out forwards;
-}
-
-/* Pulse for health indicator */
 @keyframes health-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50%       { opacity: 0.5; }
 }
+.health-pulse { animation: health-pulse 2s ease-in-out infinite; }
 
-.health-pulse {
-  animation: health-pulse 2s ease-in-out infinite;
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--dash-total); }
+  to   { stroke-dashoffset: var(--dash-offset); }
 }
+.ring-animate { animation: ring-fill 1.2s cubic-bezier(0.4,0,0.2,1) forwards; }
 
-/* Card press effect */
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.bar-grow { animation: bar-grow 0.6s ease-out forwards; transform-origin: bottom; }
+
 .card-press {
   transition: transform 0.1s ease, opacity 0.1s ease;
 }
-.card-press:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
+.card-press:active { transform: scale(0.98); opacity: 0.9; }
 
-/* Input focus styles */
-input:focus, select:focus, textarea:focus {
-  outline: none;
-}
-
-/* Progress bar animation */
-@keyframes progress-fill {
-  from { width: 0%; }
-  to { width: var(--progress); }
-}
-
-.progress-bar {
-  animation: progress-fill 1s ease-out forwards;
-}
+input:focus, select:focus, textarea:focus { outline: none; }
