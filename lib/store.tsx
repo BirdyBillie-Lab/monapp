@@ -1,19 +1,21 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { AppState, IncomeEntry, UserProfile } from './types';
+import { AppState, Client, IncomeEntry, UserProfile } from './types';
 
 const STORAGE_KEY = 'copilote_data';
 
 const defaultState: AppState = {
   profile: null,
   entries: [],
+  clients: [],
 };
 
 interface StoreContextValue extends AppState {
   saveProfile: (profile: UserProfile) => void;
   addEntry: (entry: IncomeEntry) => void;
   deleteEntry: (id: string) => void;
+  addClient: (client: Client) => void;
   isLoaded: boolean;
 }
 
@@ -27,8 +29,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as AppState;
-        setState(parsed);
+        const parsed = JSON.parse(raw) as Partial<AppState>;
+        setState({
+          ...defaultState,
+          ...parsed,
+          clients: parsed.clients ?? [],
+        });
       }
     } catch {
       // ignore parse errors
@@ -68,9 +74,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state, persist]
   );
 
+  const addClient = useCallback(
+    (client: Client) => {
+      const clients = [client, ...state.clients];
+      persist({ ...state, clients });
+    },
+    [state, persist]
+  );
+
   return (
     <StoreContext.Provider
-      value={{ ...state, saveProfile, addEntry, deleteEntry, isLoaded }}
+      value={{ ...state, saveProfile, addEntry, deleteEntry, addClient, isLoaded }}
     >
       {children}
     </StoreContext.Provider>

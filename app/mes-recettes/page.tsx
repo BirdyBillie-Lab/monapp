@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { filterEntriesByPeriod, formatEur, getEntryLines } from '@/lib/calculations';
 import { IncomeEntry, PLATFORM_FEES } from '@/lib/types';
-import { Check, ChevronDown, ChevronUp, ExternalLink, FileDown } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, ExternalLink, FileDown, X } from 'lucide-react';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -140,42 +140,7 @@ function MonthRow({ row }: {
 
 // ─── PDF export ────────────────────────────────────────────────────────────────
 
-function printLivreRecettes(entries: IncomeEntry[], month: number, year: number) {
-  const monthName = MONTHS_FR[month];
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-  const total = sorted.reduce((s, e) => s + e.grossAmount, 0);
-
-  const fmtEur = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
-
-  const rows = sorted.map((entry, i) => {
-    const allLines = getEntryLines(entry);
-    const hasServices = allLines.some(l => l.category === 'services');
-    const hasSales    = allLines.some(l => l.category === 'sales');
-    const nature = hasServices && hasSales
-      ? 'Prestation de service / Vente de marchandise'
-      : hasServices
-        ? 'Prestation de service'
-        : 'Vente de marchandise';
-    const dateFmt     = new Date(entry.date).toLocaleDateString('fr-FR');
-    const paymentLabel = PLATFORM_FEES[entry.paymentMethod]?.label ?? entry.paymentMethod;
-    const bg = i % 2 === 1 ? 'background:#f9f9f9' : '';
-    return `<tr style="${bg}">
-      <td>${dateFmt}</td>
-      <td>${entry.clientName ?? '—'}</td>
-      <td>${entry.invoiceRef ?? '—'}</td>
-      <td>${nature}</td>
-      <td style="text-align:right;white-space:nowrap">${fmtEur(entry.grossAmount)}</td>
-      <td>${paymentLabel}</td>
-    </tr>`;
-  }).join('');
-
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Livre des recettes — ${monthName} ${year}</title>
-<style>
+const PDF_CSS = `
   body{font-family:Arial,sans-serif;font-size:11px;margin:15mm;color:#111}
   h1{font-size:17px;margin:0 0 2px}
   .subtitle{font-size:11px;color:#666;margin:0 0 16px}
@@ -184,34 +149,31 @@ function printLivreRecettes(entries: IncomeEntry[], month: number, year: number)
   td{padding:5px 8px;border:1px solid #ddd;vertical-align:top}
   .total-row td{font-weight:700;border-top:2px solid #222;background:#f5f5f5}
   @media print{body{margin:10mm}@page{margin:10mm}}
-</style>
-</head>
-<body>
-<h1>Livre des recettes</h1>
-<p class="subtitle">${monthName} ${year}</p>
-<table>
-<thead>
-<tr>
-  <th>Date</th>
-  <th>Identité du client</th>
-  <th>Réf. facture</th>
-  <th>Nature de l'opération</th>
-  <th style="text-align:right">Montant TTC (€)</th>
-  <th>Mode de règlement</th>
-</tr>
-</thead>
-<tbody>
-${rows}
-<tr class="total-row">
-  <td colspan="4">Total ${monthName} ${year}</td>
-  <td style="text-align:right;white-space:nowrap">${fmtEur(total)}</td>
-  <td></td>
-</tr>
-</tbody>
-</table>
-</body>
-</html>`;
+`;
 
+function buildEntryRows(sorted: IncomeEntry[]): string {
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
+  return sorted.map((entry, i) => {
+    const allLines = getEntryLines(entry);
+    const hasServices = allLines.some(l => l.category === 'services');
+    const hasSales    = allLines.some(l => l.category === 'sales');
+    const nature = hasServices && hasSales
+      ? 'Prestation de service / Vente de marchandise'
+      : hasServices ? 'Prestation de service' : 'Vente de marchandise';
+    const bg = i % 2 === 1 ? 'background:#f9f9f9' : '';
+    return `<tr style="${bg}">
+      <td>${new Date(entry.date).toLocaleDateString('fr-FR')}</td>
+      <td>${entry.clientName ?? '—'}</td>
+      <td>${entry.invoiceRef ?? '—'}</td>
+      <td>${nature}</td>
+      <td style="text-align:right;white-space:nowrap">${fmtEur(entry.grossAmount)}</td>
+      <td>${PLATFORM_FEES[entry.paymentMethod]?.label ?? entry.paymentMethod}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openPrintWindow(html: string) {
   const w = window.open('', '_blank');
   if (w) {
     w.document.write(html);
@@ -221,6 +183,180 @@ ${rows}
   }
 }
 
+function printByMonth(allEntries: IncomeEntry[], month: number, year: number) {
+  const start = new Date(year, month, 1);
+  const end   = new Date(year, month + 1, 0);
+  const sorted = filterEntriesByPeriod(allEntries, start, end).sort((a, b) => a.date.localeCompare(b.date));
+  const total  = sorted.reduce((s, e) => s + e.grossAmount, 0);
+  const label  = `${MONTHS_FR[month]} ${year}`;
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
+  openPrintWindow(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Livre des recettes — ${label}</title><style>${PDF_CSS}</style></head>
+<body><h1>Livre des recettes</h1><p class="subtitle">${label}</p>
+<table><thead><tr>
+  <th>Date</th><th>Identité du client</th><th>Réf. facture</th>
+  <th>Nature de l'opération</th><th style="text-align:right">Montant TTC (€)</th><th>Mode de règlement</th>
+</tr></thead><tbody>
+${buildEntryRows(sorted)}
+<tr class="total-row"><td colspan="4">Total ${label}</td>
+<td style="text-align:right;white-space:nowrap">${fmtEur(total)}</td><td></td></tr>
+</tbody></table></body></html>`);
+}
+
+function printByQuarter(allEntries: IncomeEntry[], quarter: number, year: number) {
+  const startMonth = (quarter - 1) * 3;
+  const start = new Date(year, startMonth, 1);
+  const end   = new Date(year, startMonth + 3, 0);
+  const sorted = filterEntriesByPeriod(allEntries, start, end).sort((a, b) => a.date.localeCompare(b.date));
+  const total  = sorted.reduce((s, e) => s + e.grossAmount, 0);
+  const label  = `T${quarter} ${year}`;
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
+  openPrintWindow(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<title>Livre des recettes — ${label}</title><style>${PDF_CSS}</style></head>
+<body><h1>Livre des recettes</h1><p class="subtitle">${label}</p>
+<table><thead><tr>
+  <th>Date</th><th>Identité du client</th><th>Réf. facture</th>
+  <th>Nature de l'opération</th><th style="text-align:right">Montant TTC (€)</th><th>Mode de règlement</th>
+</tr></thead><tbody>
+${buildEntryRows(sorted)}
+<tr class="total-row"><td colspan="4">Total ${label}</td>
+<td style="text-align:right;white-space:nowrap">${fmtEur(total)}</td><td></td></tr>
+</tbody></table></body></html>`);
+}
+
+// ─── Export modal ──────────────────────────────────────────────────────────────
+
+function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: () => void }) {
+  const now          = new Date();
+  const currentYear  = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const currentQ     = Math.floor(currentMonth / 3) + 1;
+
+  const [type,    setType]    = useState<'month' | 'quarter'>('month');
+  const [year,    setYear]    = useState(currentYear);
+  const [month,   setMonth]   = useState(currentMonth);
+  const [quarter, setQuarter] = useState(currentQ);
+
+  const availableYears = useMemo(() => {
+    const years = new Set(entries.map(e => new Date(e.date).getFullYear()));
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => b - a);
+  }, [entries, currentYear]);
+
+  const handleGenerate = () => {
+    if (type === 'month') printByMonth(entries, month, year);
+    else printByQuarter(entries, quarter, year);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-surface rounded-t-3xl p-5 flex flex-col gap-5 safe-bottom">
+        {/* Handle */}
+        <div className="w-10 h-1 bg-border rounded-full mx-auto -mt-1" />
+
+        <div className="flex items-center justify-between">
+          <p className="text-text font-bold text-base">Exporter le livre des recettes</p>
+          <button onClick={onClose} className="text-muted">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Period type */}
+        <div>
+          <p className="text-muted text-xs uppercase tracking-widest mb-2">Période</p>
+          <div className="flex gap-2">
+            {(['month', 'quarter'] as const).map(t => (
+              <button key={t} onClick={() => setType(t)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={type === t
+                  ? { background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', color: '#fff' }
+                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
+              >
+                {t === 'month' ? 'Mois' : 'Trimestre'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Year */}
+        <div>
+          <p className="text-muted text-xs uppercase tracking-widest mb-2">Année</p>
+          <div className="flex gap-2 flex-wrap">
+            {availableYears.map(y => (
+              <button key={y} onClick={() => setYear(y)}
+                className="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={year === y
+                  ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
+                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Month or Quarter selector */}
+        {type === 'month' ? (
+          <div>
+            <p className="text-muted text-xs uppercase tracking-widest mb-2">Mois</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {MONTHS_FR.map((name, m) => {
+                const isFuture = year === currentYear && m > currentMonth;
+                return (
+                  <button key={m} onClick={() => !isFuture && setMonth(m)}
+                    disabled={isFuture}
+                    className="py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-30"
+                    style={month === m && !isFuture
+                      ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
+                      : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
+                  >
+                    {name.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-muted text-xs uppercase tracking-widest mb-2">Trimestre</p>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4].map(q => {
+                const isFuture = year === currentYear && q > currentQ;
+                return (
+                  <button key={q} onClick={() => !isFuture && setQuarter(q)}
+                    disabled={isFuture}
+                    className="py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30"
+                    style={quarter === q && !isFuture
+                      ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
+                      : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
+                  >
+                    T{q}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <button onClick={handleGenerate}
+          className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
+          style={{
+            background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
+            boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
+          }}
+        >
+          <FileDown size={16} strokeWidth={2.5} />
+          Générer le PDF
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Journal tab ───────────────────────────────────────────────────────────────
 
 function JournalTab({ entries }: { entries: IncomeEntry[] }) {
@@ -228,8 +364,9 @@ function JournalTab({ entries }: { entries: IncomeEntry[] }) {
   const currentYear  = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  const [selectedYear,  setSelectedYear]  = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear,   setSelectedYear]   = useState(currentYear);
+  const [selectedMonth,  setSelectedMonth]  = useState(currentMonth);
+  const [showExport,     setShowExport]     = useState(false);
 
   // Available years
   const availableYears = useMemo(() => {
@@ -307,27 +444,33 @@ function JournalTab({ entries }: { entries: IncomeEntry[] }) {
       )}
 
       {/* Summary + export */}
-      {monthEntries.length > 0 && (
-        <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted text-xs uppercase tracking-widest">
-              Total {MONTHS_FR[selectedMonth]} {selectedYear}
-            </span>
-            <span className="text-text font-bold text-lg tabular-nums">{formatEur(total)}</span>
-          </div>
-          <div className="h-px bg-border" />
-          <button
-            onClick={() => printLivreRecettes(monthEntries, selectedMonth, selectedYear)}
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm text-white"
-            style={{
-              background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
-              boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
-            }}
-          >
-            <FileDown size={16} strokeWidth={2.5} />
-            Exporter le livre des recettes — PDF
-          </button>
-        </div>
+      <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3">
+        {monthEntries.length > 0 && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-muted text-xs uppercase tracking-widest">
+                Total {MONTHS_FR[selectedMonth]} {selectedYear}
+              </span>
+              <span className="text-text font-bold text-lg tabular-nums">{formatEur(total)}</span>
+            </div>
+            <div className="h-px bg-border" />
+          </>
+        )}
+        <button
+          onClick={() => setShowExport(true)}
+          className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm text-white"
+          style={{
+            background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
+            boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
+          }}
+        >
+          <FileDown size={16} strokeWidth={2.5} />
+          Exporter le livre des recettes — PDF
+        </button>
+      </div>
+
+      {showExport && (
+        <ExportModal entries={entries} onClose={() => setShowExport(false)} />
       )}
     </div>
   );

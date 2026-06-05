@@ -1,23 +1,206 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
-import { IncomeEntry, InvoiceLine, LineCategory, PaymentMethod, PLATFORM_FEES } from '@/lib/types';
+import { Client, IncomeEntry, InvoiceLine, LineCategory, PaymentMethod, PLATFORM_FEES } from '@/lib/types';
 import { formatEurDecimal } from '@/lib/calculations';
-import { ChevronLeft, Check, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Check, Plus, Trash2, X, UserPlus, Search } from 'lucide-react';
 
 function emptyLine(): InvoiceLine {
   return { id: crypto.randomUUID(), description: '', category: 'services', amount: 0 };
 }
 
+function clientFullName(c: Client): string {
+  return [c.prenom, c.nom].filter(Boolean).join(' ');
+}
+
+// ─── Client search + add ───────────────────────────────────────────────────────
+
+function ClientField({
+  clients,
+  selectedClient,
+  manualName,
+  onSelect,
+  onManualChange,
+  onAdd,
+}: {
+  clients: Client[];
+  selectedClient: Client | null;
+  manualName: string;
+  onSelect: (c: Client | null) => void;
+  onManualChange: (name: string) => void;
+  onAdd: (c: Client) => void;
+}) {
+  const [query, setQuery]         = useState(selectedClient ? clientFullName(selectedClient) : manualName);
+  const [open, setOpen]           = useState(false);
+  const [showForm, setShowForm]   = useState(false);
+  const [newNom, setNewNom]       = useState('');
+  const [newPrenom, setNewPrenom] = useState('');
+  const [newTel, setNewTel]       = useState('');
+  const [newAddr, setNewAddr]     = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const matches = useMemo(() => {
+    if (!query.trim()) return clients.slice(0, 6);
+    const q = query.toLowerCase();
+    return clients.filter(c =>
+      c.nom.toLowerCase().includes(q) ||
+      (c.prenom && c.prenom.toLowerCase().includes(q)) ||
+      clientFullName(c).toLowerCase().includes(q)
+    ).slice(0, 6);
+  }, [clients, query]);
+
+  const handleQueryChange = (val: string) => {
+    setQuery(val);
+    onManualChange(val);
+    onSelect(null);
+    setOpen(true);
+    setShowForm(false);
+  };
+
+  const handleSelect = (c: Client) => {
+    setQuery(clientFullName(c));
+    onSelect(c);
+    setOpen(false);
+    setShowForm(false);
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    onSelect(null);
+    onManualChange('');
+    setOpen(false);
+    setShowForm(false);
+    inputRef.current?.focus();
+  };
+
+  const handleAddClient = () => {
+    if (!newNom.trim()) return;
+    const client: Client = {
+      id: crypto.randomUUID(),
+      nom: newNom.trim(),
+      prenom: newPrenom.trim() || undefined,
+      telephone: newTel.trim() || undefined,
+      adresse: newAddr.trim() || undefined,
+      createdAt: new Date().toISOString(),
+    };
+    onAdd(client);
+    handleSelect(client);
+    setNewNom(''); setNewPrenom(''); setNewTel(''); setNewAddr('');
+    setShowForm(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-0">
+      {/* Search input */}
+      <div className="relative">
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Rechercher ou saisir un client…"
+          value={query}
+          onChange={e => handleQueryChange(e.target.value)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          className="w-full bg-surface border border-border rounded-2xl pl-9 pr-9 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+        />
+        {query.length > 0 && (
+          <button onClick={handleClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">
+            <X size={15} />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {open && (query.length > 0 || clients.length > 0) && !showForm && (
+        <div className="bg-surface-2 border border-border rounded-2xl overflow-hidden mt-1 z-10 flex flex-col">
+          {matches.map(c => (
+            <button
+              key={c.id}
+              onMouseDown={() => handleSelect(c)}
+              className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex flex-col gap-0.5"
+            >
+              <span className="text-text text-sm font-medium">{clientFullName(c)}</span>
+              {c.telephone && <span className="text-muted text-[10px]">{c.telephone}</span>}
+            </button>
+          ))}
+          <button
+            onMouseDown={() => { setOpen(false); setShowForm(true); setNewNom(query); }}
+            className="w-full text-left px-4 py-3 flex items-center gap-2 border-t border-border"
+            style={{ color: '#A78BFA' }}
+          >
+            <UserPlus size={14} />
+            <span className="text-sm font-medium">
+              {query.trim() ? `Ajouter « ${query.trim()} »` : 'Ajouter un client'}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Add client mini form */}
+      {showForm && (
+        <div className="bg-surface-2 border border-border rounded-2xl p-4 mt-1 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-text text-sm font-semibold">Nouveau client</span>
+            <button onClick={() => setShowForm(false)} className="text-muted">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-muted text-[10px] uppercase tracking-widest mb-1">Prénom</label>
+              <input type="text" value={newPrenom} onChange={e => setNewPrenom(e.target.value)}
+                placeholder="Prénom"
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-muted text-[10px] uppercase tracking-widest mb-1">Nom *</label>
+              <input type="text" value={newNom} onChange={e => setNewNom(e.target.value)}
+                placeholder="Nom"
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-muted text-[10px] uppercase tracking-widest mb-1">Téléphone</label>
+            <input type="tel" value={newTel} onChange={e => setNewTel(e.target.value)}
+              placeholder="06 00 00 00 00"
+              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-muted text-[10px] uppercase tracking-widest mb-1">Adresse</label>
+            <input type="text" value={newAddr} onChange={e => setNewAddr(e.target.value)}
+              placeholder="Adresse complète"
+              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+            />
+          </div>
+          <button onClick={handleAddClient} disabled={!newNom.trim()}
+            className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-30 transition-opacity"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)' }}
+          >
+            Enregistrer le client
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
 export default function NewIncomePage() {
   const router = useRouter();
-  const { addEntry, entries } = useStore();
+  const { addEntry, addClient, entries, clients } = useStore();
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientName, setClientName] = useState('');
   const [invoiceRef, setInvoiceRef] = useState(() => {
     const year = new Date().getFullYear();
@@ -28,10 +211,10 @@ export default function NewIncomePage() {
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
   const [submitted, setSubmitted] = useState(false);
 
-  const feeInfo      = PLATFORM_FEES[paymentMethod];
-  const totalLine    = lines.reduce((s, l) => s + (l.amount || 0), 0);
-  const feeAmt       = totalLine * feeInfo.rate;
-  const netTotal     = totalLine - feeAmt;
+  const feeInfo       = PLATFORM_FEES[paymentMethod];
+  const totalLine     = lines.reduce((s, l) => s + (l.amount || 0), 0);
+  const feeAmt        = totalLine * feeInfo.rate;
+  const netTotal      = totalLine - feeAmt;
   const servicesTotal = lines.filter(l => l.category === 'services').reduce((s, l) => s + l.amount, 0);
   const salesTotal    = lines.filter(l => l.category === 'sales').reduce((s, l) => s + l.amount, 0);
   const isValid       = lines.some(l => l.description.trim() && l.amount > 0);
@@ -43,15 +226,23 @@ export default function NewIncomePage() {
   const addLine = () =>
     setLines(prev => [...prev, emptyLine()]);
 
+  const handleNewClient = (client: Client) => {
+    addClient(client);
+    setSelectedClient(client);
+    setClientName(clientFullName(client));
+  };
+
   const handleSubmit = () => {
     if (!isValid) return;
     const validLines = lines.filter(l => l.description.trim() && l.amount > 0);
     const gross = validLines.reduce((s, l) => s + l.amount, 0);
     const fee   = gross * feeInfo.rate;
+    const effectiveName = selectedClient ? clientFullName(selectedClient) : clientName.trim();
     const entry: IncomeEntry = {
       id: crypto.randomUUID(),
       date,
-      clientName: clientName.trim() || undefined,
+      clientName: effectiveName || undefined,
+      clientId: selectedClient?.id,
       invoiceRef: invoiceRef.trim() || undefined,
       lines: validLines,
       grossAmount: gross,
@@ -99,22 +290,29 @@ export default function NewIncomePage() {
           />
         </div>
 
-        {/* Client + Invoice ref */}
-        <div className="flex flex-col gap-3">
-          <div>
-            <label className="block text-muted text-xs uppercase tracking-widest mb-2">Client</label>
-            <input type="text" placeholder="Nom ou raison sociale du client"
-              value={clientName} onChange={e => setClientName(e.target.value)}
-              className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-muted text-xs uppercase tracking-widest mb-2">Référence facture</label>
-            <input type="text" placeholder={`${new Date().getFullYear()}-001`}
-              value={invoiceRef} onChange={e => setInvoiceRef(e.target.value)}
-              className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
-            />
-          </div>
+        {/* Client */}
+        <div>
+          <label className="block text-muted text-xs uppercase tracking-widest mb-2">Client</label>
+          <ClientField
+            clients={clients}
+            selectedClient={selectedClient}
+            manualName={clientName}
+            onSelect={c => {
+              setSelectedClient(c);
+              if (c) setClientName(clientFullName(c));
+            }}
+            onManualChange={setClientName}
+            onAdd={handleNewClient}
+          />
+        </div>
+
+        {/* Invoice ref */}
+        <div>
+          <label className="block text-muted text-xs uppercase tracking-widest mb-2">Référence facture</label>
+          <input type="text" placeholder={`${new Date().getFullYear()}-001`}
+            value={invoiceRef} onChange={e => setInvoiceRef(e.target.value)}
+            className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+          />
         </div>
 
         {/* Lines */}

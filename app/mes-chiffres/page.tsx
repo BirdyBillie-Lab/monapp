@@ -15,7 +15,29 @@ import {
   getCurrentQuarter,
   THRESHOLDS,
 } from '@/lib/calculations';
-import { ExternalLink, ChevronDown, ChevronUp, Info, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, Info, CheckCircle, AlertTriangle, XCircle, Clock, Clipboard, Check as CheckIcon } from 'lucide-react';
+
+function CopyButton({ amount }: { amount: number }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    const value = amount.toFixed(2).replace('.', ',');
+    navigator.clipboard.writeText(value).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <button onClick={copy}
+      className="flex items-center gap-1 px-2 py-0.5 rounded-lg transition-all shrink-0"
+      style={copied
+        ? { background: 'rgba(34,197,94,0.15)', color: '#22C55E' }
+        : { background: 'rgba(139,92,246,0.1)', color: '#A78BFA' }}
+    >
+      {copied
+        ? <><CheckIcon size={11} strokeWidth={2.5} /><span className="text-[10px] font-bold">Copié</span></>
+        : <Clipboard size={11} />}
+    </button>
+  );
+}
 
 export default function MesChiffresPage() {
   const { profile, entries } = useStore();
@@ -91,7 +113,13 @@ export default function MesChiffresPage() {
 
         {/* URSSAF declaration card — two columns */}
         <div className="flex flex-col gap-3">
-          <p className="text-muted text-xs uppercase tracking-widest px-1">Déclaration URSSAF</p>
+          <div className="flex flex-col gap-1 px-1">
+            <p className="text-muted text-xs uppercase tracking-widest">Déclaration URSSAF</p>
+            <p className="text-muted text-[11px] leading-relaxed">
+              Copiez ces montants pour les saisir sur{' '}
+              <span className="text-text/70 font-medium">autoentrepreneur.urssaf.fr</span>
+            </p>
+          </div>
 
           {/* Two category columns */}
           <div className="grid grid-cols-2 gap-3">
@@ -102,9 +130,12 @@ export default function MesChiffresPage() {
                 🛠
               </div>
               <p className="text-muted text-[11px] leading-tight">Prestations de services</p>
-              <p className="text-text font-bold text-base tabular-nums leading-none">
-                {formatEur(summary.servicesCA)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-text font-bold text-base tabular-nums leading-none">
+                  {formatEur(summary.servicesCA)}
+                </p>
+                <CopyButton amount={summary.servicesCA} />
+              </div>
               <div className="flex flex-col gap-1 mt-auto pt-2 border-t border-border">
                 <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md w-fit"
                   style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA' }}>
@@ -124,9 +155,12 @@ export default function MesChiffresPage() {
                 📦
               </div>
               <p className="text-muted text-[11px] leading-tight">Vente de marchandises</p>
-              <p className="text-text font-bold text-base tabular-nums leading-none">
-                {formatEur(summary.salesCA)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-text font-bold text-base tabular-nums leading-none">
+                  {formatEur(summary.salesCA)}
+                </p>
+                <CopyButton amount={summary.salesCA} />
+              </div>
               <div className="flex flex-col gap-1 mt-auto pt-2 border-t border-border">
                 <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-md w-fit"
                   style={{ background: 'rgba(245,159,11,0.15)', color: '#F59E0B' }}>
@@ -148,8 +182,11 @@ export default function MesChiffresPage() {
                 Prélevé automatiquement<br />après déclaration
               </p>
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-text text-xl font-bold tabular-nums">{formatEur(summary.totalGross)}</p>
+            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <p className="text-text text-xl font-bold tabular-nums">{formatEur(summary.totalGross)}</p>
+                <CopyButton amount={summary.totalGross} />
+              </div>
               <p className="text-purple-light font-bold text-base tabular-nums">
                 {formatEurDecimal(summary.totalToSetAside)}
               </p>

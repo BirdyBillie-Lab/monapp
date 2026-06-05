@@ -1,4 +1,13 @@
 export type ActivityType = 'services' | 'sales' | 'mixed';
+
+export interface Client {
+  id: string;
+  nom: string;
+  prenom?: string;
+  telephone?: string;
+  adresse?: string;
+  createdAt: string;
+}
 export type DeclarationFrequency = 'monthly' | 'quarterly';
 export type PaymentMethod = 'virement' | 'cheque' | 'especes' | 'stripe' | 'paypal' | 'sumup' | 'etsy' | 'autre';
 export type IncomeCategory = 'prestation' | 'consulting' | 'formation' | 'vente_produit' | 'marketplace' | 'autre';
@@ -28,6 +37,7 @@ export interface IncomeEntry {
   id: string;
   date: string;
   clientName?: string;
+  clientId?: string;
   invoiceRef?: string;
   // New multi-line structure
   lines?: InvoiceLine[];
@@ -46,6 +56,7 @@ export interface IncomeEntry {
 export interface AppState {
   profile: UserProfile | null;
   entries: IncomeEntry[];
+  clients: Client[];
 }
 
 export interface PeriodSummary {
