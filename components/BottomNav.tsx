@@ -7,7 +7,7 @@ import { Home, BarChart2, Clock, Settings } from 'lucide-react';
 const tabs = [
   { href: '/dashboard',     icon: Home,       label: 'Dashboard'   },
   { href: '/mes-chiffres',  icon: BarChart2,   label: 'Mes chiffres' },
-  { href: '/historique',    icon: Clock,       label: 'Historique'  },
+  { href: '/mes-recettes',  icon: Clock,       label: 'Mes recettes' },
   { href: '/settings',      icon: Settings,    label: 'Paramètres'  },
 ];
 

@@ -27,6 +27,8 @@ export interface UserProfile {
 export interface IncomeEntry {
   id: string;
   date: string;
+  clientName?: string;
+  invoiceRef?: string;
   // New multi-line structure
   lines?: InvoiceLine[];
   // Legacy fields (kept for backward compat — older entries without lines)

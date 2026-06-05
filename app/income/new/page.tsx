@@ -14,10 +14,16 @@ function emptyLine(): InvoiceLine {
 
 export default function NewIncomePage() {
   const router = useRouter();
-  const { addEntry } = useStore();
+  const { addEntry, entries } = useStore();
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
+  const [clientName, setClientName] = useState('');
+  const [invoiceRef, setInvoiceRef] = useState(() => {
+    const year = new Date().getFullYear();
+    const count = entries.filter(e => new Date(e.date).getFullYear() === year).length;
+    return `${year}-${String(count + 1).padStart(3, '0')}`;
+  });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('virement');
   const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()]);
   const [submitted, setSubmitted] = useState(false);
@@ -45,6 +51,8 @@ export default function NewIncomePage() {
     const entry: IncomeEntry = {
       id: crypto.randomUUID(),
       date,
+      clientName: clientName.trim() || undefined,
+      invoiceRef: invoiceRef.trim() || undefined,
       lines: validLines,
       grossAmount: gross,
       netAmount: gross - fee,
@@ -89,6 +97,24 @@ export default function NewIncomePage() {
           <input type="date" value={date} max={today} onChange={e => setDate(e.target.value)}
             className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm focus:border-purple transition-colors [color-scheme:dark]"
           />
+        </div>
+
+        {/* Client + Invoice ref */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="block text-muted text-xs uppercase tracking-widest mb-2">Client</label>
+            <input type="text" placeholder="Nom ou raison sociale du client"
+              value={clientName} onChange={e => setClientName(e.target.value)}
+              className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-muted text-xs uppercase tracking-widest mb-2">Référence facture</label>
+            <input type="text" placeholder={`${new Date().getFullYear()}-001`}
+              value={invoiceRef} onChange={e => setInvoiceRef(e.target.value)}
+              className="w-full bg-surface border border-border rounded-2xl px-4 py-3 text-text text-sm placeholder-muted focus:border-purple transition-colors"
+            />
+          </div>
         </div>
 
         {/* Lines */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
@@ -8,7 +8,6 @@ import DonutChart from '@/components/DonutChart';
 import {
   filterEntriesByPeriod,
   formatEur,
-  formatEurDecimal,
   getNextDeclarationDeadline,
   getACREStatus,
   getEntryLines,
@@ -54,6 +53,18 @@ export default function DashboardPage() {
       daysLeftMonth, monthName,
     };
   }, [entries, profile, now.getMonth(), now.getFullYear()]);
+
+  const [motivationalIdx, setMotivationalIdx] = useState(0);
+  useEffect(() => {
+    const stored = sessionStorage.getItem('motivational_index');
+    if (stored !== null) {
+      setMotivationalIdx(parseInt(stored, 10) % MOTIVATIONAL_MESSAGES.length);
+    } else {
+      const idx = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
+      sessionStorage.setItem('motivational_index', String(idx));
+      setMotivationalIdx(idx);
+    }
+  }, []);
 
   if (!profile || !data) return null;
 
@@ -124,6 +135,7 @@ export default function DashboardPage() {
               salesCA={salesCA}
               centerLabel={formatEur(monthCA)}
               centerSub="CA du mois"
+              showSegmentPct
             />
 
             {/* Legend */}
@@ -228,7 +240,7 @@ export default function DashboardPage() {
         {/* Motivational message */}
         <div className="bg-surface border border-border rounded-2xl px-4 py-3.5">
           <p className="text-muted text-xs leading-relaxed italic">
-            {getMotivationalMessage(monthCA, objective, daysLeftMonth, monthName)}
+            {MOTIVATIONAL_MESSAGES[motivationalIdx]}
           </p>
         </div>
 
@@ -239,22 +251,13 @@ export default function DashboardPage() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getMotivationalMessage(
-  monthCA: number,
-  objective: number,
-  daysLeft: number,
-  monthName: string
-): string {
-  if (monthCA === 0) return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} commence — enregistrez votre premier encaissement.`;
-  if (objective === 0) return "Définissez un objectif mensuel pour suivre votre progression au fil du temps.";
-  const pct = (monthCA / objective) * 100;
-  if (pct >= 100) return "Objectif du mois atteint — chaque euro supplémentaire est un bonus bien mérité.";
-  if (pct >= 80) return "Presque là. Encore quelques missions et l'objectif est dans la poche.";
-  if (pct >= 50 && daysLeft <= 10) return "Bonne dynamique — sprint final pour finir le mois fort.";
-  if (pct >= 50) return "Vous êtes sur la bonne voie. Continuez comme ça.";
-  if (daysLeft <= 7) return "Dernière ligne droite — chaque encaissement compte.";
-  return "Chaque encaissement vous rapproche de votre objectif mensuel.";
-}
+const MOTIVATIONAL_MESSAGES = [
+  "Vous avancez à votre rythme. C'est déjà beaucoup.",
+  "Chaque jour travaillé compte. Bravo pour votre régularité.",
+  "Votre activité prend forme. Continuez comme ça.",
+  "Vous gérez votre activité avec sérieux. C'est pas rien.",
+  "Un encaissement de plus, une journée de travail reconnue.",
+];
 
 function AcreBanner({ profile }: { profile: UserProfile }) {
   const status = getACREStatus(profile);
