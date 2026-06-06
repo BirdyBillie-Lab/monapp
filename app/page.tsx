@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Link from 'next/link';
-import { ChevronRight, BarChart2, FileText, Calculator } from 'lucide-react';
+import { ChevronRight, BookOpen, Calculator, ShieldCheck } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -54,9 +54,9 @@ export default function Home() {
         {/* Features */}
         <div className="w-full max-w-sm flex flex-col gap-3 mb-12 text-left">
           {[
-            { icon: <BarChart2 size={18} />, title: 'Encaissements en un clic', desc: 'Enregistrez et suivez votre CA en temps réel' },
-            { icon: <Calculator size={18} />, title: 'Charges URSSAF calculées', desc: 'Sachez exactement combien mettre de côté' },
-            { icon: <FileText size={18} />, title: 'Déclarations sans stress', desc: 'Exportez votre livre des recettes en PDF ou CSV' },
+            { icon: <BookOpen size={18} />, title: 'Journal de recettes', desc: 'Enregistrez chaque recette et tenez votre livre à jour' },
+            { icon: <Calculator size={18} />, title: 'Charges calculées', desc: 'Sachez exactement combien mettre de côté pour l\'URSSAF' },
+            { icon: <ShieldCheck size={18} />, title: 'Prêt en cas de contrôle', desc: 'Exportez votre livre des recettes en PDF ou CSV à tout moment' },
           ].map((item) => (
             <div key={item.title}
               className="flex items-start gap-3 rounded-2xl px-4 py-3.5"
@@ -90,10 +90,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer */}
-      <p className="text-muted text-[11px] text-center pb-8 px-6">
-        Vos données restent sur votre appareil · Aucun compte requis
-      </p>
 
     </div>
   );
