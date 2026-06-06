@@ -99,11 +99,21 @@ export default function Home() {
               alt=""
               width={600}
               height={800}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               priority
             />
-            <div className="absolute inset-0 pointer-events-none"
-              style={{ background: 'rgba(8,8,24,0.2)' }} />
+            {/* Fondu gauche */}
+            <div className="absolute inset-y-0 left-0 w-2/5 pointer-events-none"
+              style={{ background: 'linear-gradient(to right, #080818, transparent)' }} />
+            {/* Fondu haut */}
+            <div className="absolute inset-x-0 top-0 h-1/4 pointer-events-none"
+              style={{ background: 'linear-gradient(to bottom, #080818, transparent)' }} />
+            {/* Fondu bas */}
+            <div className="absolute inset-x-0 bottom-0 h-1/4 pointer-events-none"
+              style={{ background: 'linear-gradient(to top, #080818, transparent)' }} />
+            {/* Fondu droit */}
+            <div className="absolute inset-y-0 right-0 w-1/5 pointer-events-none"
+              style={{ background: 'linear-gradient(to left, #080818, transparent)' }} />
           </div>
         </div>
 
