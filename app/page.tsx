@@ -79,8 +79,8 @@ export default function Home() {
             style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.s, height: s.s, opacity: 0.4 }} />
         ))}
 
-        <div className="relative flex flex-row items-center gap-4">
-          {/* Text */}
+        {/* Headline + lighthouse côte à côte */}
+        <div className="relative flex flex-row items-center gap-4 mb-5">
           <div className="flex-1 z-10 min-w-0">
             <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-3">
               L&apos;allié de votre activité,{' '}
@@ -89,28 +89,10 @@ export default function Home() {
             <p className="text-white/60 text-sm md:text-base leading-relaxed mb-2">
               Copilote s&apos;occupe de vos chiffres, de vos déclarations et de vos rappels importants.
             </p>
-            <p className="font-medium italic text-sm mb-5" style={{ color: '#A78BFA' }}>
+            <p className="font-medium italic text-sm" style={{ color: '#A78BFA' }}>
               Vous gardez le cap, on s&apos;occupe du reste.
             </p>
-            <div className="flex flex-row gap-2 mb-4">
-              <Link href="/onboarding"
-                className="flex-1 py-3 rounded-xl font-bold text-xs text-white text-center"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
-                Essayer gratuitement
-              </Link>
-              <Link href="#features"
-                className="flex-1 py-3 rounded-xl font-bold text-xs text-white text-center border"
-                style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
-                Découvrir Copilote
-              </Link>
-            </div>
-            {/* Trust */}
-            <p className="text-[10px] text-white/40 leading-relaxed">
-              ✓ Sans engagement · 🔒 Sécurisé · ♡ Pour les indépendants
-            </p>
           </div>
-
-          {/* Lighthouse — right side, always visible */}
           <div className="relative shrink-0 w-36 h-52 md:w-96 md:h-[480px]">
             <Image
               src="/Lighthouse.png"
@@ -124,6 +106,25 @@ export default function Home() {
               style={{ background: 'rgba(8,8,24,0.2)' }} />
           </div>
         </div>
+
+        {/* Boutons pleine largeur */}
+        <div className="relative flex flex-row gap-2 mb-3">
+          <Link href="/onboarding"
+            className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white text-center"
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
+            Essayer gratuitement
+          </Link>
+          <Link href="#features"
+            className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white text-center border"
+            style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
+            Découvrir Copilote
+          </Link>
+        </div>
+
+        {/* Trust pleine largeur */}
+        <p className="relative text-center text-[11px] text-white/40">
+          ✓ Sans engagement · 🔒 Sécurisé · ♡ Pour les indépendants
+        </p>
       </section>
 
       {/* ── Features ── */}
