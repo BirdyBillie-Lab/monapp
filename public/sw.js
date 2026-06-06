@@ -1,4 +1,4 @@
-const CACHE_NAME = 'copilote-v1';
+const CACHE_NAME = 'copilote-v2';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -28,16 +28,16 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith(self.location.origin)) return;
 
+  // Network first — toujours la version fraîche, cache uniquement si hors ligne
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      });
-      return cached || networkFetch;
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
