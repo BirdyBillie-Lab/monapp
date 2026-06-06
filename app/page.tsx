@@ -4,8 +4,70 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Link from 'next/link';
-import { ChevronRight, BookOpen, Calculator, ShieldCheck } from 'lucide-react';
+import { Check, BarChart2, Bell, FileText, Lock, Heart, Shield } from 'lucide-react';
 
+// ── Hardcoded star positions to avoid hydration mismatch ──────────────────────
+const STARS = [
+  { top: 4,  left: 8,  s: 1.5 }, { top: 7,  left: 22, s: 1   }, { top: 3,  left: 38, s: 2   },
+  { top: 11, left: 52, s: 1   }, { top: 6,  left: 67, s: 1.5 }, { top: 2,  left: 80, s: 1   },
+  { top: 9,  left: 91, s: 1.5 }, { top: 14, left: 14, s: 1   }, { top: 18, left: 29, s: 2   },
+  { top: 13, left: 44, s: 1   }, { top: 20, left: 60, s: 1.5 }, { top: 16, left: 75, s: 1   },
+  { top: 22, left: 88, s: 2   }, { top: 25, left: 5,  s: 1   }, { top: 28, left: 19, s: 1.5 },
+  { top: 24, left: 33, s: 1   }, { top: 30, left: 48, s: 2   }, { top: 26, left: 70, s: 1   },
+  { top: 33, left: 83, s: 1.5 }, { top: 36, left: 10, s: 1   }, { top: 1,  left: 95, s: 1.5 },
+  { top: 8,  left: 57, s: 1   }, { top: 19, left: 3,  s: 1.5 }, { top: 31, left: 96, s: 1   },
+];
+
+// ── Lighthouse SVG ────────────────────────────────────────────────────────────
+function Lighthouse() {
+  return (
+    <svg viewBox="0 0 180 280" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Sky glow behind lighthouse */}
+      <ellipse cx="130" cy="100" rx="55" ry="55" fill="rgba(245,158,11,0.08)" />
+      {/* Mountains */}
+      <polygon points="0,280 0,200 60,140 120,200 180,160 180,280" fill="#1A1035" />
+      <polygon points="0,280 0,220 40,180 90,220 140,190 180,210 180,280" fill="#120D28" />
+      {/* Water */}
+      <rect x="0" y="250" width="180" height="30" fill="#0D0A20" opacity="0.8" />
+      <ellipse cx="90" cy="252" rx="90" ry="4" fill="rgba(139,92,246,0.1)" />
+      {/* Light beam */}
+      <polygon points="128,88 60,170 10,200 60,180" fill="rgba(245,158,11,0.07)" />
+      <polygon points="128,88 180,140 180,180 150,160" fill="rgba(245,158,11,0.05)" />
+      {/* Tower base */}
+      <rect x="112" y="160" width="36" height="100" rx="2" fill="#1E1640" />
+      {/* Tower body - slightly tapered */}
+      <polygon points="114,80 118,160 142,160 146,80" fill="#241D50" />
+      {/* Stripes */}
+      <rect x="114" y="100" width="32" height="10" fill="#1A1340" opacity="0.6" />
+      <rect x="115" y="130" width="30" height="10" fill="#1A1340" opacity="0.6" />
+      {/* Lantern room */}
+      <rect x="108" y="68" width="44" height="18" rx="2" fill="#2D2460" />
+      {/* Light */}
+      <circle cx="130" cy="77" r="8" fill="#F59E0B" opacity="0.9" />
+      <circle cx="130" cy="77" r="14" fill="rgba(245,158,11,0.2)" />
+      <circle cx="130" cy="77" r="22" fill="rgba(245,158,11,0.08)" />
+      {/* Railing */}
+      <rect x="106" y="64" width="48" height="3" rx="1.5" fill="#3D3270" />
+      {/* Windows */}
+      <rect x="123" y="110" width="14" height="10" rx="2" fill="rgba(245,158,11,0.15)" />
+      <rect x="123" y="140" width="14" height="10" rx="2" fill="rgba(245,158,11,0.1)" />
+    </svg>
+  );
+}
+
+// ── Sparkle icon ──────────────────────────────────────────────────────────────
+function SparkleIcon() {
+  return (
+    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+      style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA, #C4B5FD)', boxShadow: '0 0 30px rgba(139,92,246,0.5)' }}>
+      <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+        <path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z" />
+      </svg>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter();
   const { profile, isLoaded } = useStore();
@@ -29,77 +91,193 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
+    <div className="min-h-screen" style={{ background: '#080818', color: '#F0F0F0' }}>
 
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-8 text-center">
-
-        {/* Logo */}
-        <div className="relative mb-8">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: '0 8px 32px rgba(139,92,246,0.4)' }}>
-            <span className="text-white text-3xl font-bold">C</span>
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-success border-2 border-bg" />
+      {/* ── Nav ── */}
+      <nav className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center mx-auto">
+          <SparkleIcon />
+          <p className="text-white font-bold text-xl mt-2">Copilote</p>
+          <p className="text-purple-light text-xs mt-0.5" style={{ color: '#A78BFA' }}>Votre activité, en toute clarté.</p>
         </div>
+        <Link href="/dashboard"
+          className="absolute right-6 top-8 px-4 py-2 rounded-xl text-sm font-medium border text-white transition-colors"
+          style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)' }}>
+          Se connecter
+        </Link>
+      </nav>
 
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-text mb-3 leading-tight">
-          Copilote
-        </h1>
-        <p className="text-muted text-base leading-relaxed max-w-xs mb-10">
-          Gérez votre activité de micro-entrepreneur sans stress ni jargon comptable.
-        </p>
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden px-6 pt-8 pb-16 max-w-4xl mx-auto">
+        {/* Stars */}
+        {STARS.map((s, i) => (
+          <div key={i} className="absolute rounded-full bg-white pointer-events-none"
+            style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.s, height: s.s, opacity: 0.4 }} />
+        ))}
 
-        {/* Features */}
-        <div className="w-full max-w-sm flex flex-col gap-3 mb-12 text-left">
+        <div className="relative flex flex-col md:flex-row items-center gap-8">
+          {/* Text */}
+          <div className="flex-1 text-center md:text-left z-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+              L&apos;allié de votre activité,{' '}
+              <br />enfin <span style={{ color: '#A78BFA' }}>sans stress.</span>
+            </h1>
+            <p className="text-white/60 text-base leading-relaxed mb-3 max-w-sm mx-auto md:mx-0">
+              Copilote s&apos;occupe de vos chiffres, de vos déclarations et de vos rappels importants.
+            </p>
+            <p className="font-medium italic mb-8" style={{ color: '#A78BFA' }}>
+              Vous gardez le cap, on s&apos;occupe du reste.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6">
+              <Link href="/onboarding"
+                className="px-6 py-3.5 rounded-xl font-bold text-sm text-white text-center"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
+                Essayer gratuitement
+              </Link>
+              <Link href="#features"
+                className="px-6 py-3.5 rounded-xl font-bold text-sm text-white text-center border"
+                style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
+                Découvrir Copilote
+              </Link>
+            </div>
+            {/* Trust */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-white/50">
+              <span className="flex items-center gap-1.5"><Check size={12} className="text-purple-light" style={{ color: '#A78BFA' }} /> Sans engagement</span>
+              <span className="flex items-center gap-1.5"><Lock size={12} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
+              <span className="flex items-center gap-1.5"><Heart size={12} style={{ color: '#A78BFA' }} /> Pensé pour les indépendants</span>
+            </div>
+          </div>
+
+          {/* Lighthouse */}
+          <div className="w-48 h-64 md:w-64 md:h-80 shrink-0 opacity-90">
+            <Lighthouse />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section id="features" className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-white text-center mb-10">
+          Tout ce qu&apos;il vous faut, rien que l&apos;essentiel.
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: <BookOpen size={18} />, title: 'Journal de recettes', desc: 'Enregistrez chaque recette et tenez votre livre à jour' },
-            { icon: <Calculator size={18} />, title: 'Charges calculées', desc: 'Sachez exactement combien mettre de côté pour l\'URSSAF' },
-            { icon: <ShieldCheck size={18} />, title: 'Prêt en cas de contrôle', desc: 'Exportez votre livre des recettes en PDF ou CSV à tout moment' },
-          ].map((item) => (
-            <div key={item.title}
-              className="flex items-start gap-3 rounded-2xl px-4 py-3.5"
-              style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.15)' }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: 'rgba(139,92,246,0.15)' }}>
-                <span className="text-purple-light">{item.icon}</span>
+            {
+              icon: <BarChart2 size={22} />,
+              title: 'Vos chiffres à jour, en automatique',
+              desc: 'Prestations, dépenses, TVA… Copilote calcule et classe tout pour vous.',
+            },
+            {
+              icon: <Bell size={22} />,
+              title: 'Rappels au bon moment',
+              desc: 'Plus de date limite oubliée. Copilote vous prévient à temps, toujours.',
+            },
+            {
+              icon: <FileText size={22} />,
+              title: 'Déclarations prêtes, sans prise de tête',
+              desc: 'ACRE, URSSAF, TVA… Copilote prépare et vérifie pour vous.',
+            },
+          ].map((f) => (
+            <div key={f.title} className="rounded-2xl p-5 flex flex-col gap-3"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(139,92,246,0.2)' }}>
+                <span style={{ color: '#A78BFA' }}>{f.icon}</span>
               </div>
-              <div>
-                <p className="text-text text-sm font-semibold">{item.title}</p>
-                <p className="text-muted text-xs mt-0.5">{item.desc}</p>
-              </div>
+              <p className="text-white font-bold text-sm leading-snug">{f.title}</p>
+              <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* CTAs */}
-        <div className="w-full max-w-sm flex flex-col gap-3">
-          <Link href="/onboarding"
-            className="w-full py-4 rounded-2xl font-bold text-base text-white flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: '0 4px 24px rgba(139,92,246,0.4)' }}>
-            Créer mon espace
-            <ChevronRight size={18} strokeWidth={2.5} />
-          </Link>
+      {/* ── Testimonial ── */}
+      <section className="px-6 pb-16 max-w-2xl mx-auto">
+        <div className="rounded-2xl p-6 border-l-4 flex flex-col gap-3"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderLeftColor: '#7C3AED', borderLeftWidth: 4 }}>
+          <p className="text-white/80 text-sm leading-relaxed italic">
+            &ldquo;Je déclare toujours à la dernière minute parce que je ne savais jamais ce que j&apos;étais censée mettre. Maintenant je copie-colle les chiffres.&rdquo;
+          </p>
+          <p className="text-white/40 text-xs">Léa, tatoueuse indépendante</p>
+        </div>
+      </section>
 
-          <Link href="/dashboard"
-            className="w-full py-4 rounded-2xl font-bold text-base text-center transition-colors"
-            style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: '#A78BFA' }}>
-            Se connecter
-          </Link>
+      {/* ── Pricing ── */}
+      <section className="px-6 py-16 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-white text-center mb-10">
+          Choisissez la formule qui vous ressemble.
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto">
+
+          {/* Free */}
+          <div className="rounded-2xl p-6 flex flex-col gap-4"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div>
+              <p className="text-white font-bold text-lg">Gratuit</p>
+              <p className="text-white font-bold text-4xl mt-1">0€</p>
+              <p className="text-white/40 text-sm">pour toujours</p>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {['30 encaissements/mois', 'Calculs URSSAF', 'Alertes ACRE', '1 export PDF/mois'].map(f => (
+                <div key={f} className="flex items-center gap-2">
+                  <Check size={14} style={{ color: '#A78BFA' }} />
+                  <span className="text-white/70 text-sm">{f}</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/onboarding"
+              className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center border text-white"
+              style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)' }}>
+              Commencer
+            </Link>
+          </div>
+
+          {/* Sérénité */}
+          <div className="rounded-2xl p-6 flex flex-col gap-4 relative"
+            style={{ background: 'rgba(124,58,237,0.15)', border: '2px solid rgba(139,92,246,0.6)' }}>
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' }}>
+              La plus choisie
+            </div>
+            <div>
+              <p className="text-white font-bold text-lg">Sérénité</p>
+              <p className="text-white font-bold text-4xl mt-1">4,99€</p>
+              <p className="text-white/40 text-sm">par mois ou 39€/an</p>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {['Encaissements illimités', 'Exports illimités', 'Simulateur', 'Notifications perso.', 'Stats avancées'].map(f => (
+                <div key={f} className="flex items-center gap-2">
+                  <Check size={14} style={{ color: '#A78BFA' }} />
+                  <span className="text-white/80 text-sm">{f}</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/onboarding"
+              className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center text-white"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 16px rgba(139,92,246,0.4)' }}>
+              Choisir Sérénité
+            </Link>
+          </div>
         </div>
 
-        {/* Legal links */}
-        <div className="flex items-center gap-4 mt-6">
-          <Link href="/cgv" className="text-muted text-[11px] hover:text-text transition-colors">
-            CGV
-          </Link>
-          <div className="w-px h-3 bg-border" />
-          <Link href="/confidentialite" className="text-muted text-[11px] hover:text-text transition-colors">
-            Politique de confidentialité
-          </Link>
+        <p className="text-center text-white/40 text-xs mt-6">
+          Offre de lancement : accès Sérénité à vie pour 29€* une seule fois.
+        </p>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="px-6 py-8 border-t max-w-4xl mx-auto" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-white/30 mb-6">
+          <span className="flex items-center gap-1.5"><Heart size={12} /> Conçu avec des indépendants</span>
+          <span className="flex items-center gap-1.5"><Shield size={12} /> Hébergé en France</span>
+          <span className="flex items-center gap-1.5"><Lock size={12} /> Vos données vous appartiennent</span>
         </div>
-      </div>
+        <div className="flex items-center justify-center gap-4 text-xs text-white/25">
+          <Link href="/cgv" className="hover:text-white/50 transition-colors">CGV</Link>
+          <span>·</span>
+          <Link href="/confidentialite" className="hover:text-white/50 transition-colors">Politique de confidentialité</Link>
+        </div>
+      </footer>
 
     </div>
   );
