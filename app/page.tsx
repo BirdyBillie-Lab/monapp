@@ -92,23 +92,23 @@ export default function Home() {
             <p className="font-medium italic text-sm mb-5" style={{ color: '#A78BFA' }}>
               Vous gardez le cap, on s&apos;occupe du reste.
             </p>
-            <div className="flex flex-col gap-2.5 mb-5">
+            <div className="flex flex-row gap-2 mb-4">
               <Link href="/onboarding"
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center"
+                className="flex-1 py-3 rounded-xl font-bold text-xs text-white text-center"
                 style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
                 Essayer gratuitement
               </Link>
               <Link href="#features"
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center border"
+                className="flex-1 py-3 rounded-xl font-bold text-xs text-white text-center border"
                 style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
                 Découvrir Copilote
               </Link>
             </div>
             {/* Trust */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-white/50">
-              <span className="flex items-center gap-1"><Check size={11} style={{ color: '#A78BFA' }} /> Sans engagement</span>
-              <span className="flex items-center gap-1"><Lock size={11} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
-              <span className="flex items-center gap-1"><Heart size={11} style={{ color: '#A78BFA' }} /> Pensé pour les indépendants</span>
+            <div className="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/50">
+              <span className="flex items-center gap-1"><Check size={10} style={{ color: '#A78BFA' }} /> Sans engagement</span>
+              <span className="flex items-center gap-1"><Lock size={10} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
+              <span className="flex items-center gap-1"><Heart size={10} style={{ color: '#A78BFA' }} /> Pour les indépendants</span>
             </div>
           </div>
 
