@@ -79,46 +79,45 @@ export default function Home() {
             style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.s, height: s.s, opacity: 0.4 }} />
         ))}
 
-        {/* Headline + lighthouse côte à côte */}
-        <div className="relative flex flex-row items-center gap-4 mb-5">
-          <div className="flex-1 z-10 min-w-0">
-            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-3">
-              L&apos;allié de votre activité,{' '}
-              enfin <span style={{ color: '#A78BFA' }}>sans stress.</span>
-            </h1>
-            <p className="text-white/60 text-sm md:text-base leading-relaxed mb-2">
-              Copilote s&apos;occupe de vos chiffres, de vos déclarations et de vos rappels importants.
-            </p>
-            <p className="font-medium italic text-sm" style={{ color: '#A78BFA' }}>
-              Vous gardez le cap, on s&apos;occupe du reste.
-            </p>
-          </div>
-          <div className="relative shrink-0 w-36 h-52 md:w-96 md:h-[480px]">
-            <Image
-              src="/Lighthouse.png"
-              alt=""
-              width={600}
-              height={800}
-              className="w-full h-full object-cover"
-              priority
-            />
-            {/* Fondu gauche */}
-            <div className="absolute inset-y-0 left-0 w-2/5 pointer-events-none"
-              style={{ background: 'linear-gradient(to right, #080818, transparent)' }} />
-            {/* Fondu haut */}
-            <div className="absolute inset-x-0 top-0 h-1/4 pointer-events-none"
-              style={{ background: 'linear-gradient(to bottom, #080818, transparent)' }} />
-            {/* Fondu bas */}
-            <div className="absolute inset-x-0 bottom-0 h-1/4 pointer-events-none"
-              style={{ background: 'linear-gradient(to top, #080818, transparent)' }} />
-            {/* Fondu droit */}
-            <div className="absolute inset-y-0 right-0 w-1/5 pointer-events-none"
-              style={{ background: 'linear-gradient(to left, #080818, transparent)' }} />
-          </div>
+        {/* Phare en arrière-plan à droite */}
+        <div className="absolute right-0 top-0 h-full w-3/5 md:w-1/2 pointer-events-none">
+          <Image
+            src="/Lighthouse.png"
+            alt=""
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Fondu gauche fort pour lisibilité du texte */}
+          <div className="absolute inset-y-0 left-0 w-4/5"
+            style={{ background: 'linear-gradient(to right, #080818 30%, transparent)' }} />
+          {/* Fondu haut */}
+          <div className="absolute inset-x-0 top-0 h-1/4"
+            style={{ background: 'linear-gradient(to bottom, #080818, transparent)' }} />
+          {/* Fondu bas */}
+          <div className="absolute inset-x-0 bottom-0 h-1/3"
+            style={{ background: 'linear-gradient(to top, #080818, transparent)' }} />
+          {/* Fondu droit */}
+          <div className="absolute inset-y-0 right-0 w-1/6"
+            style={{ background: 'linear-gradient(to left, #080818, transparent)' }} />
+        </div>
+
+        {/* Contenu texte par-dessus */}
+        <div className="relative z-10 max-w-xs md:max-w-lg">
+          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-3">
+            L&apos;allié de votre activité,{' '}
+            enfin <span style={{ color: '#A78BFA' }}>sans stress.</span>
+          </h1>
+          <p className="text-white/70 text-sm md:text-base leading-relaxed mb-2">
+            Copilote s&apos;occupe de vos chiffres, de vos déclarations et de vos rappels importants.
+          </p>
+          <p className="font-medium italic text-sm mb-6" style={{ color: '#A78BFA' }}>
+            Vous gardez le cap, on s&apos;occupe du reste.
+          </p>
         </div>
 
         {/* Boutons pleine largeur */}
-        <div className="relative flex flex-row gap-2 mb-3">
+        <div className="relative z-10 flex flex-row gap-2 mb-3">
           <Link href="/onboarding"
             className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white text-center"
             style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
@@ -131,8 +130,8 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Trust pleine largeur */}
-        <p className="relative text-center text-[11px] text-white/40">
+        {/* Trust */}
+        <p className="relative z-10 text-center text-[11px] text-white/40">
           ✓ Sans engagement · 🔒 Sécurisé · ♡ Pour les indépendants
         </p>
       </section>
