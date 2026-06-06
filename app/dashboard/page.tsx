@@ -14,7 +14,7 @@ import {
   getEntryLines,
 } from '@/lib/calculations';
 import { IncomeEntry, UserProfile } from '@/lib/types';
-import { Plus, Bell, BellOff, AlertTriangle, ChevronRight, Pencil } from 'lucide-react';
+import { Plus, Bell, BellOff, AlertTriangle, ChevronRight, Pencil, BookOpen, TrendingUp, Target } from 'lucide-react';
 
 // ─── Motivational messages ─────────────────────────────────────────────────────
 
@@ -188,50 +188,81 @@ export default function DashboardPage() {
           Ajouter un encaissement
         </Link>
 
-        {/* Donut + legend */}
-        <div className="bg-surface border border-border rounded-2xl p-5">
-          <p className="text-muted text-xs uppercase tracking-widest mb-4">Répartition du mois</p>
-          <div className="flex items-center gap-4">
-            <DonutChart servicesCA={servicesCA} salesCA={salesCA} centerLabel={formatEur(monthCA)} centerSub="CA du mois" showSegmentPct />
-            <div className="flex-1 flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#8B5CF6' }} />
-                  <span className="text-muted text-xs leading-tight">Prestations de services</span>
-                </div>
-                <p className="text-text font-bold text-base tabular-nums pl-4">{formatEur(servicesCA)}</p>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md w-fit ml-4"
-                  style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA' }}>{servicesPct}%</span>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#F59E0B' }} />
-                  <span className="text-muted text-xs leading-tight">Vente de marchandises</span>
-                </div>
-                <p className="text-text font-bold text-base tabular-nums pl-4">{formatEur(salesCA)}</p>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md w-fit ml-4"
-                  style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>{salesPct}%</span>
-              </div>
+        {entries.length === 0 ? (
+          /* ── Empty state ── */
+          <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center text-center gap-5">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
+              <BookOpen size={28} className="text-purple-light" />
             </div>
-          </div>
-        </div>
-
-        {/* Recent entries */}
-        {recentEntries.length > 0 && (
-          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-              <p className="text-muted text-xs uppercase tracking-widest">Derniers encaissements</p>
-              <Link href="/mes-recettes" className="text-purple-light text-[11px] font-medium">
-                Voir tout →
-              </Link>
+            <div>
+              <p className="text-text font-bold text-base mb-1">Votre journal est vide</p>
+              <p className="text-muted text-sm leading-relaxed">
+                Enregistrez votre première recette pour faire apparaître vos statistiques ici.
+              </p>
             </div>
-            <div className="divide-y divide-border">
-              {recentEntries.map(entry => (
-                <RecentEntryRow key={entry.id} entry={entry} onEdit={() => router.push(`/income/edit/${entry.id}`)} />
+            <div className="w-full flex flex-col gap-2.5 text-left">
+              {[
+                { icon: <TrendingUp size={14} />, text: 'Répartition de votre CA par catégorie' },
+                { icon: <BookOpen size={14} />, text: 'Historique de vos dernières recettes' },
+                { icon: <Target size={14} />, text: 'Suivi de votre objectif mensuel' },
+              ].map(item => (
+                <div key={item.text} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)' }}>
+                  <span className="text-purple-light shrink-0">{item.icon}</span>
+                  <span className="text-muted text-xs">{item.text}</span>
+                </div>
               ))}
             </div>
           </div>
+        ) : (
+          <>
+            {/* Donut + legend */}
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <p className="text-muted text-xs uppercase tracking-widest mb-4">Répartition du mois</p>
+              <div className="flex items-center gap-4">
+                <DonutChart servicesCA={servicesCA} salesCA={salesCA} centerLabel={formatEur(monthCA)} centerSub="CA du mois" showSegmentPct />
+                <div className="flex-1 flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#8B5CF6' }} />
+                      <span className="text-muted text-xs leading-tight">Prestations de services</span>
+                    </div>
+                    <p className="text-text font-bold text-base tabular-nums pl-4">{formatEur(servicesCA)}</p>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md w-fit ml-4"
+                      style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA' }}>{servicesPct}%</span>
+                  </div>
+                  <div className="h-px bg-border" />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: '#F59E0B' }} />
+                      <span className="text-muted text-xs leading-tight">Vente de marchandises</span>
+                    </div>
+                    <p className="text-text font-bold text-base tabular-nums pl-4">{formatEur(salesCA)}</p>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md w-fit ml-4"
+                      style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>{salesPct}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent entries */}
+            {recentEntries.length > 0 && (
+              <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+                <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+                  <p className="text-muted text-xs uppercase tracking-widest">Derniers encaissements</p>
+                  <Link href="/mes-recettes" className="text-purple-light text-[11px] font-medium">
+                    Voir tout →
+                  </Link>
+                </div>
+                <div className="divide-y divide-border">
+                  {recentEntries.map(entry => (
+                    <RecentEntryRow key={entry.id} entry={entry} onEdit={() => router.push(`/income/edit/${entry.id}`)} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Monthly objective */}
