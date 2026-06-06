@@ -345,63 +345,71 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-surface rounded-t-3xl p-5 flex flex-col gap-5"
-        style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-        <div className="w-10 h-1 bg-border rounded-full mx-auto -mt-1" />
+      <div className="relative bg-surface rounded-t-3xl flex flex-col"
+        style={{ maxHeight: '85vh' }}>
 
-        <div className="flex items-center justify-between">
-          <p className="text-text font-bold text-base">Exporter le livre des recettes</p>
-          <button onClick={onClose} className="text-muted"><X size={20} /></button>
-        </div>
-
-        {/* Presets */}
-        <div>
-          <p className="text-muted text-xs uppercase tracking-widest mb-2">Raccourcis</p>
-          <PresetDropdown
-            presets={presets}
-            activePreset={activePreset}
-            onSelect={handlePreset}
-          />
-        </div>
-
-        {/* Custom date range */}
-        <div>
-          <p className="text-muted text-xs uppercase tracking-widest mb-2">Période personnalisée</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-muted text-[10px] mb-1">Du</label>
-              <input type="date" value={dateFrom}
-                onChange={e => { setDateFrom(e.target.value); setActivePreset(''); }}
-                className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
-            </div>
-            <div>
-              <label className="block text-muted text-[10px] mb-1">Au</label>
-              <input type="date" value={dateTo} min={dateFrom}
-                onChange={e => { setDateTo(e.target.value); setActivePreset(''); }}
-                className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
-            </div>
+        {/* Fixed header */}
+        <div className="px-5 pt-5 pb-4 flex-shrink-0 border-b border-border">
+          <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
+          <div className="flex items-center justify-between">
+            <p className="text-text font-bold text-base">Exporter le livre des recettes</p>
+            <button onClick={onClose} className="text-muted"><X size={20} /></button>
           </div>
-          {isValid && (
-            <p className="text-muted text-xs mt-1.5 px-1">
-              {count > 0
-                ? `${count} encaissement${count > 1 ? 's' : ''} dans cette période`
-                : 'Aucun encaissement dans cette période'}
-            </p>
-          )}
         </div>
 
-        {/* Buttons */}
-        <div className="flex gap-2">
-          <button onClick={handlePDF} disabled={!isValid || count === 0}
-            className="flex-1 py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-30"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: isValid && count > 0 ? '0 4px 20px rgba(139,92,246,0.3)' : 'none' }}>
-            <FileDown size={16} strokeWidth={2.5} /> PDF
-          </button>
-          <button onClick={handleCSV} disabled={!isValid || count === 0}
-            className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-30"
-            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
-            <FileDown size={16} strokeWidth={2.5} /> CSV
-          </button>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 flex flex-col gap-5"
+          style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+
+          {/* Presets */}
+          <div>
+            <p className="text-muted text-xs uppercase tracking-widest mb-2">Raccourcis</p>
+            <PresetDropdown
+              presets={presets}
+              activePreset={activePreset}
+              onSelect={handlePreset}
+            />
+          </div>
+
+          {/* Custom date range */}
+          <div>
+            <p className="text-muted text-xs uppercase tracking-widest mb-2">Période personnalisée</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-muted text-[10px] mb-1">Du</label>
+                <input type="date" value={dateFrom}
+                  onChange={e => { setDateFrom(e.target.value); setActivePreset(''); }}
+                  className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
+              </div>
+              <div>
+                <label className="block text-muted text-[10px] mb-1">Au</label>
+                <input type="date" value={dateTo} min={dateFrom}
+                  onChange={e => { setDateTo(e.target.value); setActivePreset(''); }}
+                  className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
+              </div>
+            </div>
+            {isValid && (
+              <p className="text-muted text-xs mt-1.5 px-1">
+                {count > 0
+                  ? `${count} encaissement${count > 1 ? 's' : ''} dans cette période`
+                  : 'Aucun encaissement dans cette période'}
+              </p>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-2 pb-safe">
+            <button onClick={handlePDF} disabled={!isValid || count === 0}
+              className="flex-1 py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-30"
+              style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: isValid && count > 0 ? '0 4px 20px rgba(139,92,246,0.3)' : 'none' }}>
+              <FileDown size={16} strokeWidth={2.5} /> PDF
+            </button>
+            <button onClick={handleCSV} disabled={!isValid || count === 0}
+              className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-30"
+              style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
+              <FileDown size={16} strokeWidth={2.5} /> CSV
+            </button>
+          </div>
         </div>
       </div>
     </div>
