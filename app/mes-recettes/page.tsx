@@ -737,7 +737,7 @@ function DeclarationsTab({ entries }: { entries: IncomeEntry[] }) {
             className="w-full bg-surface border border-border rounded-2xl px-4 py-3.5 flex items-center justify-between"
           >
             <span className="text-text font-medium text-sm">
-              Déclarations précédentes
+              Mois précédents
               <span className="text-muted font-normal ml-1.5">({previousRows.length})</span>
             </span>
             {showPrevious
