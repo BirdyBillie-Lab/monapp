@@ -235,6 +235,51 @@ ${buildEntryRows(sorted)}
 </tbody></table></body></html>`);
 }
 
+// ─── Preset dropdown ───────────────────────────────────────────────────────────
+
+function PresetDropdown({
+  presets, activePreset, onSelect,
+}: {
+  presets: { label: string; from: string; to: string }[];
+  activePreset: string;
+  onSelect: (p: { label: string; from: string; to: string }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = presets.find(p => p.label === activePreset) ?? null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all"
+        style={open
+          ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
+          : { background: '#1E1A2E', border: '1px solid #2D2848', color: selected ? '#A78BFA' : '#9B8EC4' }}>
+        <span>{selected ? selected.label : 'Choisir une période…'}</span>
+        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+      </button>
+      {open && (
+        <div className="absolute z-20 w-full mt-1 rounded-xl overflow-hidden"
+          style={{ background: '#1E1A2E', border: '1px solid #2D2848' }}>
+          {presets.map(p => (
+            <button
+              key={p.label}
+              onMouseDown={() => { onSelect(p); setOpen(false); }}
+              className="w-full text-left px-4 py-3 text-sm transition-colors border-b last:border-0"
+              style={{
+                borderColor: '#2D2848',
+                color: activePreset === p.label ? '#A78BFA' : '#9B8EC4',
+                background: activePreset === p.label ? 'rgba(139,92,246,0.1)' : 'transparent',
+              }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Export modal ──────────────────────────────────────────────────────────────
 
 function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: () => void }) {
@@ -312,20 +357,11 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
         {/* Presets */}
         <div>
           <p className="text-muted text-xs uppercase tracking-widest mb-2">Raccourcis</p>
-          <select
-            value={activePreset}
-            onChange={e => {
-              const p = presets.find(p => p.label === e.target.value);
-              if (p) handlePreset(p);
-            }}
-            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm font-medium focus:border-purple transition-colors [color-scheme:dark]"
-            style={{ color: activePreset ? '#A78BFA' : '#9B8EC4' }}
-          >
-            <option value="" disabled>Choisir une période…</option>
-            {presets.map(p => (
-              <option key={p.label} value={p.label}>{p.label}</option>
-            ))}
-          </select>
+          <PresetDropdown
+            presets={presets}
+            activePreset={activePreset}
+            onSelect={handlePreset}
+          />
         </div>
 
         {/* Custom date range */}
