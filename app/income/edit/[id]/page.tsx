@@ -4,9 +4,9 @@ import { use, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
-import { Client, IncomeEntry, InvoiceLine, PaymentMethod, PLATFORM_FEES } from '@/lib/types';
+import { Client, IncomeEntry, InvoiceLine, PaymentMethod, PLATFORM_FEES, Product } from '@/lib/types';
 import { formatEurDecimal } from '@/lib/calculations';
-import { ChevronLeft, Check, Plus, Trash2, X, UserPlus, Search } from 'lucide-react';
+import { ChevronLeft, Check, Plus, Trash2, X, UserPlus, Search, BookOpen } from 'lucide-react';
 
 function clientFullName(c: Client) {
   return [c.prenom, c.nom].filter(Boolean).join(' ');
@@ -112,7 +112,7 @@ function ClientField({ clients, selectedClient, manualName, onSelect, onManualCh
 export default function EditIncomePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { entries, clients, updateEntry, deleteEntry, addClient } = useStore();
+  const { entries, clients, products, updateEntry, deleteEntry, addClient } = useStore();
 
   const entry = entries.find(e => e.id === id);
 
@@ -234,6 +234,7 @@ export default function EditIncomePage({ params }: { params: Promise<{ id: strin
           <div className="flex flex-col gap-3">
             {lines.map((line, i) => (
               <LineCard key={line.id} line={line} index={i} canDelete={lines.length > 1}
+                products={products}
                 onChange={patch => updateLine(line.id, patch)} onDelete={() => removeLine(line.id)} />
             ))}
           </div>
@@ -299,16 +300,50 @@ export default function EditIncomePage({ params }: { params: Promise<{ id: strin
   );
 }
 
-function LineCard({ line, index, canDelete, onChange, onDelete }: {
-  line: InvoiceLine; index: number; canDelete: boolean;
+function LineCard({ line, index, canDelete, products = [], onChange, onDelete }: {
+  line: InvoiceLine; index: number; canDelete: boolean; products?: Product[];
   onChange: (p: Partial<InvoiceLine>) => void; onDelete: () => void;
 }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  const handlePickProduct = (p: Product) => {
+    onChange({ description: p.nom, category: p.lineCategory, ...(p.prixUnitaire != null ? { amount: p.prixUnitaire } : {}) });
+    setShowPicker(false);
+  };
+
   return (
     <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-muted text-xs font-medium uppercase tracking-widest">Ligne {index + 1}</span>
-        {canDelete && <button onClick={onDelete} className="text-muted hover:text-danger transition-colors"><Trash2 size={15} /></button>}
+        <div className="flex items-center gap-2">
+          {products.length > 0 && (
+            <button onClick={() => setShowPicker(v => !v)}
+              className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg transition-all"
+              style={showPicker
+                ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#A78BFA' }
+                : { background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', color: '#A78BFA' }}>
+              <BookOpen size={11} /> Catalogue
+            </button>
+          )}
+          {canDelete && <button onClick={onDelete} className="text-muted hover:text-danger transition-colors"><Trash2 size={15} /></button>}
+        </div>
       </div>
+
+      {showPicker && (
+        <div className="bg-surface-2 border border-border rounded-xl overflow-hidden flex flex-col -mt-1">
+          {[...products].sort((a, b) => a.nom.localeCompare(b.nom, 'fr')).map(p => (
+            <button key={p.id} onMouseDown={() => handlePickProduct(p)}
+              className="w-full text-left px-3 py-2.5 border-b border-border last:border-0 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-text text-xs font-medium">{p.nom}</span>
+                {p.description && <span className="text-muted text-[10px] ml-2">{p.description}</span>}
+              </div>
+              {p.prixUnitaire != null && <span className="text-gold text-[10px] font-medium shrink-0">{formatEurDecimal(p.prixUnitaire)}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
       <input type="text" placeholder="Description" value={line.description} onChange={e => onChange({ description: e.target.value })}
         className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm placeholder-muted focus:border-purple transition-colors" />
       <div className="flex gap-2">

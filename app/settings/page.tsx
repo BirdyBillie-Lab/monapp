@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { UserProfile, ActivityType, DeclarationFrequency } from '@/lib/types';
-import { Check, AlertTriangle, ChevronRight, Users } from 'lucide-react';
+import { Check, AlertTriangle, ChevronRight, Users, Package } from 'lucide-react';
 import Link from 'next/link';
 import { THRESHOLDS, getACREStatus } from '@/lib/calculations';
 
@@ -184,6 +184,21 @@ export default function SettingsPage() {
             Pour toute question fiscale ou comptable, consultez un expert-comptable.
           </p>
         </div>
+
+        {/* Products */}
+        <Link href="/produits"
+          className="w-full bg-surface border border-border rounded-2xl px-4 py-3.5 flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.12)' }}>
+              <Package size={16} className="text-purple-light" />
+            </div>
+            <div>
+              <p className="text-text text-sm font-medium">Mes produits</p>
+              <p className="text-muted text-xs">Gérer votre catalogue de prestations</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-muted" />
+        </Link>
 
         {/* Clients */}
         <Link href="/clients"

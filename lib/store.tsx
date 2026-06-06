@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { AppState, Client, IncomeEntry, UserProfile } from './types';
+import { AppState, Client, IncomeEntry, Product, UserProfile } from './types';
 
 const STORAGE_KEY = 'copilote_data';
 
@@ -9,6 +9,7 @@ const defaultState: AppState = {
   profile: null,
   entries: [],
   clients: [],
+  products: [],
 };
 
 interface StoreContextValue extends AppState {
@@ -19,6 +20,9 @@ interface StoreContextValue extends AppState {
   addClient: (client: Client) => void;
   updateClient: (client: Client) => void;
   deleteClient: (id: string) => void;
+  addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
+  deleteProduct: (id: string) => void;
   isLoaded: boolean;
 }
 
@@ -33,7 +37,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<AppState>;
-        setState({ ...defaultState, ...parsed, clients: parsed.clients ?? [] });
+        setState({ ...defaultState, ...parsed, clients: parsed.clients ?? [], products: parsed.products ?? [] });
       }
     } catch { /* ignore */ }
     setIsLoaded(true);
@@ -48,12 +52,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const addEntry     = useCallback((entry: IncomeEntry)   => persist({ ...state, entries: [entry, ...state.entries] }), [state, persist]);
   const updateEntry  = useCallback((entry: IncomeEntry)   => persist({ ...state, entries: state.entries.map(e => e.id === entry.id ? entry : e) }), [state, persist]);
   const deleteEntry  = useCallback((id: string)           => persist({ ...state, entries: state.entries.filter(e => e.id !== id) }), [state, persist]);
-  const addClient    = useCallback((client: Client)       => persist({ ...state, clients: [client, ...state.clients] }), [state, persist]);
-  const updateClient = useCallback((client: Client)       => persist({ ...state, clients: state.clients.map(c => c.id === client.id ? client : c) }), [state, persist]);
-  const deleteClient = useCallback((id: string)           => persist({ ...state, clients: state.clients.filter(c => c.id !== id) }), [state, persist]);
+  const addClient     = useCallback((client: Client)     => persist({ ...state, clients: [client, ...state.clients] }), [state, persist]);
+  const updateClient  = useCallback((client: Client)     => persist({ ...state, clients: state.clients.map(c => c.id === client.id ? client : c) }), [state, persist]);
+  const deleteClient  = useCallback((id: string)         => persist({ ...state, clients: state.clients.filter(c => c.id !== id) }), [state, persist]);
+  const addProduct    = useCallback((product: Product)   => persist({ ...state, products: [product, ...state.products] }), [state, persist]);
+  const updateProduct = useCallback((product: Product)   => persist({ ...state, products: state.products.map(p => p.id === product.id ? product : p) }), [state, persist]);
+  const deleteProduct = useCallback((id: string)         => persist({ ...state, products: state.products.filter(p => p.id !== id) }), [state, persist]);
 
   return (
-    <StoreContext.Provider value={{ ...state, saveProfile, addEntry, updateEntry, deleteEntry, addClient, updateClient, deleteClient, isLoaded }}>
+    <StoreContext.Provider value={{ ...state, saveProfile, addEntry, updateEntry, deleteEntry, addClient, updateClient, deleteClient, addProduct, updateProduct, deleteProduct, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

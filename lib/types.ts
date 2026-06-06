@@ -53,10 +53,20 @@ export interface IncomeEntry {
   createdAt: string;
 }
 
+export interface Product {
+  id: string;
+  nom: string;
+  description?: string;
+  prixUnitaire?: number;
+  lineCategory: LineCategory;
+  createdAt: string;
+}
+
 export interface AppState {
   profile: UserProfile | null;
   entries: IncomeEntry[];
   clients: Client[];
+  products: Product[];
 }
 
 export interface PeriodSummary {
