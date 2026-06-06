@@ -256,6 +256,7 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
       { label: 'Trimestre en cours',    from: localISO(new Date(currentYear, qStartM, 1)),         to: localISO(new Date(currentYear, qStartM + 3, 0)) },
       { label: 'Trimestre précédent',   from: localISO(new Date(prevQYear, prevQStartM, 1)),       to: localISO(new Date(prevQYear, prevQStartM + 3, 0)) },
       { label: 'Année en cours',        from: localISO(new Date(currentYear, 0, 1)),               to: localISO(new Date(currentYear, 11, 31)) },
+      { label: 'Année précédente',      from: localISO(new Date(currentYear - 1, 0, 1)),           to: localISO(new Date(currentYear - 1, 11, 31)) },
     ];
   }, []);
 
