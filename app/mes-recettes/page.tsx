@@ -210,34 +210,16 @@ function downloadCSV(entries: IncomeEntry[], label: string) {
   URL.revokeObjectURL(url);
 }
 
-function printByMonth(allEntries: IncomeEntry[], month: number, year: number) {
-  const start = new Date(year, month, 1);
-  const end   = new Date(year, month + 1, 0);
-  const sorted = filterEntriesByPeriod(allEntries, start, end).sort((a, b) => a.date.localeCompare(b.date));
-  const total  = sorted.reduce((s, e) => s + e.grossAmount, 0);
-  const label  = `${MONTHS_FR[month]} ${year}`;
-  const fmtEur = (n: number) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
-  openPrintWindow(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-<title>Livre des recettes — ${label}</title><style>${PDF_CSS}</style></head>
-<body><h1>Livre des recettes</h1><p class="subtitle">${label}</p>
-<table><thead><tr>
-  <th>Date</th><th>Identité du client</th><th>Réf. facture</th>
-  <th>Nature de l'opération</th><th style="text-align:right">Montant TTC (€)</th><th>Mode de règlement</th>
-</tr></thead><tbody>
-${buildEntryRows(sorted)}
-<tr class="total-row"><td colspan="4">Total ${label}</td>
-<td style="text-align:right;white-space:nowrap">${fmtEur(total)}</td><td></td></tr>
-</tbody></table></body></html>`);
+function localISO(d: Date): string {
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-function printByQuarter(allEntries: IncomeEntry[], quarter: number, year: number) {
-  const startMonth = (quarter - 1) * 3;
-  const start = new Date(year, startMonth, 1);
-  const end   = new Date(year, startMonth + 3, 0);
-  const sorted = filterEntriesByPeriod(allEntries, start, end).sort((a, b) => a.date.localeCompare(b.date));
+function printByRange(allEntries: IncomeEntry[], from: Date, to: Date, label: string) {
+  const sorted = filterEntriesByPeriod(allEntries, from, to).sort((a, b) => a.date.localeCompare(b.date));
   const total  = sorted.reduce((s, e) => s + e.grossAmount, 0);
-  const label  = `T${quarter} ${year}`;
   const fmtEur = (n: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(n);
   openPrintWindow(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
@@ -259,143 +241,131 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
   const now          = new Date();
   const currentYear  = now.getFullYear();
   const currentMonth = now.getMonth();
-  const currentQ     = Math.floor(currentMonth / 3) + 1;
+  const currentQ     = Math.floor(currentMonth / 3);
 
-  const [type,    setType]    = useState<'month' | 'quarter'>('month');
-  const [year,    setYear]    = useState(currentYear);
-  const [month,   setMonth]   = useState(currentMonth);
-  const [quarter, setQuarter] = useState(currentQ);
+  const presets = useMemo(() => {
+    const prevMonth     = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const qStartM       = currentQ * 3;
+    const prevQ         = currentQ === 0 ? 3 : currentQ - 1;
+    const prevQYear     = currentQ === 0 ? currentYear - 1 : currentYear;
+    const prevQStartM   = prevQ * 3;
+    return [
+      { label: 'Mois en cours',        from: localISO(new Date(currentYear, currentMonth, 1)),    to: localISO(new Date(currentYear, currentMonth + 1, 0)) },
+      { label: 'Mois précédent',        from: localISO(new Date(prevMonthYear, prevMonth, 1)),     to: localISO(new Date(prevMonthYear, prevMonth + 1, 0)) },
+      { label: 'Trimestre en cours',    from: localISO(new Date(currentYear, qStartM, 1)),         to: localISO(new Date(currentYear, qStartM + 3, 0)) },
+      { label: 'Trimestre précédent',   from: localISO(new Date(prevQYear, prevQStartM, 1)),       to: localISO(new Date(prevQYear, prevQStartM + 3, 0)) },
+      { label: 'Année en cours',        from: localISO(new Date(currentYear, 0, 1)),               to: localISO(new Date(currentYear, 11, 31)) },
+    ];
+  }, []);
 
-  const availableYears = useMemo(() => {
-    const years = new Set(entries.map(e => new Date(e.date).getFullYear()));
-    years.add(currentYear);
-    return Array.from(years).sort((a, b) => b - a);
-  }, [entries, currentYear]);
+  const [activePreset, setActivePreset] = useState(presets[0].label);
+  const [dateFrom, setDateFrom]         = useState(presets[0].from);
+  const [dateTo, setDateTo]             = useState(presets[0].to);
 
-  const handleGenerate = () => {
-    if (type === 'month') printByMonth(entries, month, year);
-    else printByQuarter(entries, quarter, year);
+  const handlePreset = (p: typeof presets[0]) => {
+    setActivePreset(p.label);
+    setDateFrom(p.from);
+    setDateTo(p.to);
+  };
+
+  const getLabel = () => {
+    if (activePreset) return activePreset;
+    const fmt = (s: string) => new Date(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
+  };
+
+  const isValid   = !!dateFrom && !!dateTo && dateFrom <= dateTo;
+  const filtered  = useMemo(() =>
+    isValid
+      ? filterEntriesByPeriod(entries, new Date(dateFrom), new Date(dateTo))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      : [],
+    [entries, dateFrom, dateTo, isValid]
+  );
+  const count = filtered.length;
+
+  const handlePDF = () => {
+    printByRange(entries, new Date(dateFrom), new Date(dateTo), getLabel());
+    onClose();
+  };
+
+  const handleCSV = () => {
+    const slug = getLabel().replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim().replace(/\s+/g, '-');
+    downloadCSV(filtered, slug);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-surface rounded-t-3xl p-5 flex flex-col gap-5 safe-bottom">
-        {/* Handle */}
+      <div className="relative bg-surface rounded-t-3xl p-5 flex flex-col gap-5"
+        style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="w-10 h-1 bg-border rounded-full mx-auto -mt-1" />
 
         <div className="flex items-center justify-between">
           <p className="text-text font-bold text-base">Exporter le livre des recettes</p>
-          <button onClick={onClose} className="text-muted">
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="text-muted"><X size={20} /></button>
         </div>
 
-        {/* Period type */}
+        {/* Presets */}
         <div>
-          <p className="text-muted text-xs uppercase tracking-widest mb-2">Période</p>
-          <div className="flex gap-2">
-            {(['month', 'quarter'] as const).map(t => (
-              <button key={t} onClick={() => setType(t)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={type === t
-                  ? { background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', color: '#fff' }
-                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
-              >
-                {t === 'month' ? 'Mois' : 'Trimestre'}
+          <p className="text-muted text-xs uppercase tracking-widest mb-2">Raccourcis</p>
+          <div className="flex flex-col gap-1.5">
+            {presets.map(p => (
+              <button key={p.label} onClick={() => handlePreset(p)}
+                className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                style={activePreset === p.label
+                  ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
+                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}>
+                {p.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Year */}
+        {/* Custom date range */}
         <div>
-          <p className="text-muted text-xs uppercase tracking-widest mb-2">Année</p>
-          <div className="flex gap-2 flex-wrap">
-            {availableYears.map(y => (
-              <button key={y} onClick={() => setYear(y)}
-                className="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
-                style={year === y
-                  ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
-                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
-              >
-                {y}
-              </button>
-            ))}
+          <p className="text-muted text-xs uppercase tracking-widest mb-2">Période personnalisée</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-muted text-[10px] mb-1">Du</label>
+              <input type="date" value={dateFrom}
+                onChange={e => { setDateFrom(e.target.value); setActivePreset(''); }}
+                className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
+            </div>
+            <div>
+              <label className="block text-muted text-[10px] mb-1">Au</label>
+              <input type="date" value={dateTo} min={dateFrom}
+                onChange={e => { setDateTo(e.target.value); setActivePreset(''); }}
+                className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-text text-sm [color-scheme:dark] focus:border-purple transition-colors" />
+            </div>
           </div>
+          {isValid && (
+            <p className="text-muted text-xs mt-1.5 px-1">
+              {count > 0
+                ? `${count} encaissement${count > 1 ? 's' : ''} dans cette période`
+                : 'Aucun encaissement dans cette période'}
+            </p>
+          )}
         </div>
 
-        {/* Month or Quarter selector */}
-        {type === 'month' ? (
-          <div>
-            <p className="text-muted text-xs uppercase tracking-widest mb-2">Mois</p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {MONTHS_FR.map((name, m) => {
-                const isFuture = year === currentYear && m > currentMonth;
-                return (
-                  <button key={m} onClick={() => !isFuture && setMonth(m)}
-                    disabled={isFuture}
-                    className="py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-30"
-                    style={month === m && !isFuture
-                      ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
-                      : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
-                  >
-                    {name.slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p className="text-muted text-xs uppercase tracking-widest mb-2">Trimestre</p>
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map(q => {
-                const isFuture = year === currentYear && q > currentQ;
-                return (
-                  <button key={q} onClick={() => !isFuture && setQuarter(q)}
-                    disabled={isFuture}
-                    className="py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30"
-                    style={quarter === q && !isFuture
-                      ? { background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
-                      : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}
-                  >
-                    T{q}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
+        {/* Buttons */}
         <div className="flex gap-2">
-          <button onClick={handleGenerate}
-            className="flex-1 py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}>
-            <FileDown size={16} strokeWidth={2.5} />
-            PDF
+          <button onClick={handlePDF} disabled={!isValid || count === 0}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-30"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: isValid && count > 0 ? '0 4px 20px rgba(139,92,246,0.3)' : 'none' }}>
+            <FileDown size={16} strokeWidth={2.5} /> PDF
           </button>
-          <button onClick={() => { handleCSV(); onClose(); }}
-            className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+          <button onClick={handleCSV} disabled={!isValid || count === 0}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-30"
             style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
-            <FileDown size={16} strokeWidth={2.5} />
-            CSV
+            <FileDown size={16} strokeWidth={2.5} /> CSV
           </button>
         </div>
       </div>
     </div>
   );
-
-  function handleCSV() {
-    const startMonth = type === 'quarter' ? (quarter - 1) * 3 : month;
-    const endMonth   = type === 'quarter' ? (quarter - 1) * 3 + 2 : month;
-    const start = new Date(year, startMonth, 1);
-    const end   = new Date(year, endMonth + 1, 0);
-    const sorted = filterEntriesByPeriod(entries, start, end).sort((a, b) => a.date.localeCompare(b.date));
-    const label  = type === 'month' ? `${MONTHS_FR[month]}-${year}` : `T${quarter}-${year}`;
-    downloadCSV(sorted, label);
-  }
 }
 
 // ─── Journal tab ───────────────────────────────────────────────────────────────
