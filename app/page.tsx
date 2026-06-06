@@ -105,11 +105,9 @@ export default function Home() {
               </Link>
             </div>
             {/* Trust */}
-            <div className="flex flex-row flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/50">
-              <span className="flex items-center gap-1"><Check size={10} style={{ color: '#A78BFA' }} /> Sans engagement</span>
-              <span className="flex items-center gap-1"><Lock size={10} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
-              <span className="flex items-center gap-1"><Heart size={10} style={{ color: '#A78BFA' }} /> Pour les indépendants</span>
-            </div>
+            <p className="text-[10px] text-white/40 leading-relaxed">
+              ✓ Sans engagement · 🔒 Sécurisé · ♡ Pour les indépendants
+            </p>
           </div>
 
           {/* Lighthouse — right side, always visible */}
