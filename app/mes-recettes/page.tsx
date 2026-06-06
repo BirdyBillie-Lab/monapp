@@ -358,7 +358,7 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-8 flex flex-col gap-5"
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-5 pb-8 flex flex-col gap-5"
           style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
 
           {/* Presets */}
