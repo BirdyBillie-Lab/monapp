@@ -72,48 +72,48 @@ export default function Home() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden px-6 pt-8 pb-16 max-w-4xl mx-auto">
+      <section className="relative overflow-hidden px-5 pt-6 pb-10 max-w-4xl mx-auto">
         {/* Stars */}
         {STARS.map((s, i) => (
           <div key={i} className="absolute rounded-full bg-white pointer-events-none"
             style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.s, height: s.s, opacity: 0.4 }} />
         ))}
 
-        <div className="relative flex flex-col md:flex-row items-center gap-8">
+        <div className="relative flex flex-row items-center gap-4">
           {/* Text */}
-          <div className="flex-1 text-center md:text-left z-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+          <div className="flex-1 z-10 min-w-0">
+            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-3">
               L&apos;allié de votre activité,{' '}
-              <br />enfin <span style={{ color: '#A78BFA' }}>sans stress.</span>
+              enfin <span style={{ color: '#A78BFA' }}>sans stress.</span>
             </h1>
-            <p className="text-white/60 text-base leading-relaxed mb-3 max-w-sm mx-auto md:mx-0">
+            <p className="text-white/60 text-sm md:text-base leading-relaxed mb-2">
               Copilote s&apos;occupe de vos chiffres, de vos déclarations et de vos rappels importants.
             </p>
-            <p className="font-medium italic mb-8" style={{ color: '#A78BFA' }}>
+            <p className="font-medium italic text-sm mb-5" style={{ color: '#A78BFA' }}>
               Vous gardez le cap, on s&apos;occupe du reste.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6">
+            <div className="flex flex-col gap-2.5 mb-5">
               <Link href="/onboarding"
-                className="px-6 py-3.5 rounded-xl font-bold text-sm text-white text-center"
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center"
                 style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.4)' }}>
                 Essayer gratuitement
               </Link>
               <Link href="#features"
-                className="px-6 py-3.5 rounded-xl font-bold text-sm text-white text-center border"
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center border"
                 style={{ borderColor: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)' }}>
                 Découvrir Copilote
               </Link>
             </div>
             {/* Trust */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-white/50">
-              <span className="flex items-center gap-1.5"><Check size={12} className="text-purple-light" style={{ color: '#A78BFA' }} /> Sans engagement</span>
-              <span className="flex items-center gap-1.5"><Lock size={12} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
-              <span className="flex items-center gap-1.5"><Heart size={12} style={{ color: '#A78BFA' }} /> Pensé pour les indépendants</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-white/50">
+              <span className="flex items-center gap-1"><Check size={11} style={{ color: '#A78BFA' }} /> Sans engagement</span>
+              <span className="flex items-center gap-1"><Lock size={11} style={{ color: '#A78BFA' }} /> Données sécurisées</span>
+              <span className="flex items-center gap-1"><Heart size={11} style={{ color: '#A78BFA' }} /> Pensé pour les indépendants</span>
             </div>
           </div>
 
-          {/* Lighthouse */}
-          <div className="relative w-64 h-80 md:w-96 md:h-[480px] shrink-0">
+          {/* Lighthouse — right side, always visible */}
+          <div className="relative shrink-0 w-36 h-52 md:w-96 md:h-[480px]">
             <Image
               src="/Lighthouse.png"
               alt=""
@@ -122,43 +122,45 @@ export default function Home() {
               className="w-full h-full object-contain"
               priority
             />
-            <div className="absolute inset-0 pointer-events-none rounded-2xl"
-              style={{ background: 'rgba(8,8,24,0.25)' }} />
+            <div className="absolute inset-0 pointer-events-none"
+              style={{ background: 'rgba(8,8,24,0.2)' }} />
           </div>
         </div>
       </section>
 
       {/* ── Features ── */}
-      <section id="features" className="px-6 py-16 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-white text-center mb-10">
+      <section id="features" className="px-5 py-10 max-w-4xl mx-auto">
+        <h2 className="text-xl md:text-2xl font-bold text-white text-center mb-6">
           Tout ce qu&apos;il vous faut, rien que l&apos;essentiel.
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-3">
           {[
             {
-              icon: <BarChart2 size={22} />,
+              icon: <BarChart2 size={20} />,
               title: 'Vos chiffres à jour, en automatique',
               desc: 'Prestations, dépenses, TVA… Copilote calcule et classe tout pour vous.',
             },
             {
-              icon: <Bell size={22} />,
+              icon: <Bell size={20} />,
               title: 'Rappels au bon moment',
               desc: 'Plus de date limite oubliée. Copilote vous prévient à temps, toujours.',
             },
             {
-              icon: <FileText size={22} />,
+              icon: <FileText size={20} />,
               title: 'Déclarations prêtes, sans prise de tête',
               desc: 'ACRE, URSSAF, TVA… Copilote prépare et vérifie pour vous.',
             },
           ].map((f) => (
-            <div key={f.title} className="rounded-2xl p-5 flex flex-col gap-3"
+            <div key={f.title} className="rounded-2xl p-4 flex flex-row md:flex-col gap-3 items-start"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              <div className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center"
                 style={{ background: 'rgba(139,92,246,0.2)' }}>
                 <span style={{ color: '#A78BFA' }}>{f.icon}</span>
               </div>
-              <p className="text-white font-bold text-sm leading-snug">{f.title}</p>
-              <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
+              <div>
+                <p className="text-white font-bold text-sm leading-snug mb-1">{f.title}</p>
+                <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -176,64 +178,64 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ── */}
-      <section className="px-6 py-16 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold text-white text-center mb-10">
+      <section className="px-5 py-10 max-w-4xl mx-auto">
+        <h2 className="text-xl md:text-2xl font-bold text-white text-center mb-8">
           Choisissez la formule qui vous ressemble.
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto">
+        <div className="grid grid-cols-2 gap-3">
 
           {/* Free */}
-          <div className="rounded-2xl p-6 flex flex-col gap-4"
+          <div className="rounded-2xl p-4 md:p-6 flex flex-col gap-3"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div>
-              <p className="text-white font-bold text-lg">Gratuit</p>
-              <p className="text-white font-bold text-4xl mt-1">0€</p>
-              <p className="text-white/40 text-sm">pour toujours</p>
+              <p className="text-white font-bold text-base md:text-lg">Gratuit</p>
+              <p className="text-white font-bold text-3xl md:text-4xl mt-1">0€</p>
+              <p className="text-white/40 text-xs md:text-sm">pour toujours</p>
             </div>
-            <div className="flex flex-col gap-2.5">
-              {['30 encaissements/mois', 'Calculs URSSAF', 'Alertes ACRE', '1 export PDF/mois'].map(f => (
-                <div key={f} className="flex items-center gap-2">
-                  <Check size={14} style={{ color: '#A78BFA' }} />
-                  <span className="text-white/70 text-sm">{f}</span>
+            <div className="flex flex-col gap-2">
+              {['30 recettes/mois', 'Calculs URSSAF', 'Alertes ACRE', '1 export/mois'].map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <Check size={12} className="mt-0.5 shrink-0" style={{ color: '#A78BFA' }} />
+                  <span className="text-white/70 text-xs md:text-sm">{f}</span>
                 </div>
               ))}
             </div>
             <Link href="/onboarding"
-              className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center border text-white"
+              className="mt-auto w-full py-2.5 rounded-xl text-xs md:text-sm font-bold text-center border text-white"
               style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)' }}>
               Commencer
             </Link>
           </div>
 
           {/* Sérénité */}
-          <div className="rounded-2xl p-6 flex flex-col gap-4 relative"
+          <div className="rounded-2xl p-4 md:p-6 flex flex-col gap-3 relative"
             style={{ background: 'rgba(124,58,237,0.15)', border: '2px solid rgba(139,92,246,0.6)' }}>
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white"
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-bold text-white"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' }}>
               La plus choisie
             </div>
             <div>
-              <p className="text-white font-bold text-lg">Sérénité</p>
-              <p className="text-white font-bold text-4xl mt-1">4,99€</p>
-              <p className="text-white/40 text-sm">par mois ou 39€/an</p>
+              <p className="text-white font-bold text-base md:text-lg">Sérénité</p>
+              <p className="text-white font-bold text-3xl md:text-4xl mt-1">4,99€</p>
+              <p className="text-white/40 text-xs md:text-sm">/ mois ou 39€/an</p>
             </div>
-            <div className="flex flex-col gap-2.5">
-              {['Encaissements illimités', 'Exports illimités', 'Simulateur', 'Notifications perso.', 'Stats avancées'].map(f => (
-                <div key={f} className="flex items-center gap-2">
-                  <Check size={14} style={{ color: '#A78BFA' }} />
-                  <span className="text-white/80 text-sm">{f}</span>
+            <div className="flex flex-col gap-2">
+              {['Recettes illimitées', 'Exports illimités', 'Simulateur', 'Notifs perso.', 'Stats avancées'].map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <Check size={12} className="mt-0.5 shrink-0" style={{ color: '#A78BFA' }} />
+                  <span className="text-white/80 text-xs md:text-sm">{f}</span>
                 </div>
               ))}
             </div>
             <Link href="/onboarding"
-              className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center text-white"
+              className="mt-auto w-full py-2.5 rounded-xl text-xs md:text-sm font-bold text-center text-white"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', boxShadow: '0 4px 16px rgba(139,92,246,0.4)' }}>
               Choisir Sérénité
             </Link>
           </div>
         </div>
 
-        <p className="text-center text-white/40 text-xs mt-6">
+        <p className="text-center text-white/40 text-xs mt-5">
           Offre de lancement : accès Sérénité à vie pour 29€* une seule fois.
         </p>
       </section>
