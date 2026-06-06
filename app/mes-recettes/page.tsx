@@ -311,17 +311,20 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
         {/* Presets */}
         <div>
           <p className="text-muted text-xs uppercase tracking-widest mb-2">Raccourcis</p>
-          <div className="flex flex-col gap-1.5">
+          <select
+            value={activePreset}
+            onChange={e => {
+              const p = presets.find(p => p.label === e.target.value);
+              if (p) handlePreset(p);
+            }}
+            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm font-medium focus:border-purple transition-colors [color-scheme:dark]"
+            style={{ color: activePreset ? '#A78BFA' : '#9B8EC4' }}
+          >
+            <option value="" disabled>Choisir une période…</option>
             {presets.map(p => (
-              <button key={p.label} onClick={() => handlePreset(p)}
-                className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style={activePreset === p.label
-                  ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.5)', color: '#A78BFA' }
-                  : { background: '#1E1A2E', border: '1px solid #2D2848', color: '#9B8EC4' }}>
-                {p.label}
-              </button>
+              <option key={p.label} value={p.label}>{p.label}</option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* Custom date range */}
