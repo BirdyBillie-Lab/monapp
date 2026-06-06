@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { UserProfile, ActivityType, DeclarationFrequency } from '@/lib/types';
-import { Check, AlertTriangle, ChevronRight, Users, Package } from 'lucide-react';
+import { Check, AlertTriangle, ChevronRight, Users, Package, FileText, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { THRESHOLDS, getACREStatus } from '@/lib/calculations';
 
@@ -166,7 +166,6 @@ export default function SettingsPage() {
           </div>
           {[
             { label: 'Version', value: '1.0.0' },
-            { label: 'Données', value: 'Stockées localement' },
             { label: 'Taux de charges', value: 'Barème 2024' },
           ].map((item) => (
             <div key={item.label} className="flex justify-between items-center px-4 py-3 border-b border-border last:border-0">
@@ -174,6 +173,20 @@ export default function SettingsPage() {
               <span className="text-muted text-sm">{item.value}</span>
             </div>
           ))}
+          <Link href="/cgv" className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-muted" />
+              <span className="text-white/80 text-sm">CGV</span>
+            </div>
+            <ChevronRight size={14} className="text-muted" />
+          </Link>
+          <Link href="/confidentialite" className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Shield size={14} className="text-muted" />
+              <span className="text-white/80 text-sm">Politique de confidentialité</span>
+            </div>
+            <ChevronRight size={14} className="text-muted" />
+          </Link>
         </div>
 
         {/* Disclaimer */}

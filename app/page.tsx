@@ -88,8 +88,18 @@ export default function Home() {
             Se connecter
           </Link>
         </div>
-      </div>
 
+        {/* Legal links */}
+        <div className="flex items-center gap-4 mt-6">
+          <Link href="/cgv" className="text-muted text-[11px] hover:text-text transition-colors">
+            CGV
+          </Link>
+          <div className="w-px h-3 bg-border" />
+          <Link href="/confidentialite" className="text-muted text-[11px] hover:text-text transition-colors">
+            Politique de confidentialité
+          </Link>
+        </div>
+      </div>
 
     </div>
   );
