@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { UserProfile, ActivityType, DeclarationFrequency } from '@/lib/types';
-import { Check, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Check, AlertTriangle, ChevronRight, Users } from 'lucide-react';
+import Link from 'next/link';
 import { THRESHOLDS, getACREStatus } from '@/lib/calculations';
 
 const EMPTY_PROFILE: UserProfile = {
@@ -183,6 +184,21 @@ export default function SettingsPage() {
             Pour toute question fiscale ou comptable, consultez un expert-comptable.
           </p>
         </div>
+
+        {/* Clients */}
+        <Link href="/clients"
+          className="w-full bg-surface border border-border rounded-2xl px-4 py-3.5 flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.12)' }}>
+              <Users size={16} className="text-purple-light" />
+            </div>
+            <div>
+              <p className="text-text text-sm font-medium">Mes clients</p>
+              <p className="text-muted text-xs">Gérer vos clients enregistrés</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-muted" />
+        </Link>
 
         {/* Danger zone */}
         <div className="bg-danger/5 border border-danger/20 rounded-2xl overflow-hidden">

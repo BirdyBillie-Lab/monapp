@@ -5,7 +5,8 @@ import { useStore } from '@/lib/store';
 import AppShell from '@/components/AppShell';
 import { filterEntriesByPeriod, formatEur, getEntryLines } from '@/lib/calculations';
 import { IncomeEntry, PLATFORM_FEES } from '@/lib/types';
-import { Check, ChevronDown, ChevronUp, ExternalLink, FileDown, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, ExternalLink, FileDown, X, Pencil, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -183,6 +184,32 @@ function openPrintWindow(html: string) {
   }
 }
 
+function downloadCSV(entries: IncomeEntry[], label: string) {
+  const headers = ['Date', 'Client', 'Référence', 'Nature', 'Montant TTC', 'Mode de paiement'];
+  const rows = entries.map(entry => {
+    const allLines    = getEntryLines(entry);
+    const hasServices = allLines.some(l => l.category === 'services');
+    const hasSales    = allLines.some(l => l.category === 'sales');
+    const nature = hasServices && hasSales ? 'Mixte' : hasServices ? 'Prestation de service' : 'Vente de marchandise';
+    return [
+      new Date(entry.date).toLocaleDateString('fr-FR'),
+      entry.clientName ?? '',
+      entry.invoiceRef ?? '',
+      nature,
+      entry.grossAmount.toFixed(2).replace('.', ','),
+      PLATFORM_FEES[entry.paymentMethod]?.label ?? entry.paymentMethod,
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';');
+  });
+  const csv  = [headers.join(';'), ...rows].join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `livre-recettes-${label}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function printByMonth(allEntries: IncomeEntry[], month: number, year: number) {
   const start = new Date(year, month, 1);
   const end   = new Date(year, month + 1, 0);
@@ -342,19 +369,33 @@ function ExportModal({ entries, onClose }: { entries: IncomeEntry[]; onClose: ()
           </div>
         )}
 
-        <button onClick={handleGenerate}
-          className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
-          style={{
-            background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
-            boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
-          }}
-        >
-          <FileDown size={16} strokeWidth={2.5} />
-          Générer le PDF
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleGenerate}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #A78BFA)', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}>
+            <FileDown size={16} strokeWidth={2.5} />
+            PDF
+          </button>
+          <button onClick={() => { handleCSV(); onClose(); }}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
+            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
+            <FileDown size={16} strokeWidth={2.5} />
+            CSV
+          </button>
+        </div>
       </div>
     </div>
   );
+
+  function handleCSV() {
+    const startMonth = type === 'quarter' ? (quarter - 1) * 3 : month;
+    const endMonth   = type === 'quarter' ? (quarter - 1) * 3 + 2 : month;
+    const start = new Date(year, startMonth, 1);
+    const end   = new Date(year, endMonth + 1, 0);
+    const sorted = filterEntriesByPeriod(entries, start, end).sort((a, b) => a.date.localeCompare(b.date));
+    const label  = type === 'month' ? `${MONTHS_FR[month]}-${year}` : `T${quarter}-${year}`;
+    downloadCSV(sorted, label);
+  }
 }
 
 // ─── Journal tab ───────────────────────────────────────────────────────────────
@@ -477,14 +518,14 @@ function JournalTab({ entries }: { entries: IncomeEntry[] }) {
 }
 
 function JournalEntryRow({ entry }: { entry: IncomeEntry }) {
+  const { deleteEntry } = useStore();
+  const router = useRouter();
+  const [deleteStep, setDeleteStep] = useState(0);
+
   const allLines    = getEntryLines(entry);
   const hasServices = allLines.some(l => l.category === 'services');
   const hasSales    = allLines.some(l => l.category === 'sales');
-  const nature = hasServices && hasSales
-    ? 'Prestation / Vente'
-    : hasServices
-      ? 'Prestation'
-      : 'Vente';
+  const nature = hasServices && hasSales ? 'Prestation / Vente' : hasServices ? 'Prestation' : 'Vente';
   const dateFmt      = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   const paymentLabel = PLATFORM_FEES[entry.paymentMethod]?.label ?? entry.paymentMethod;
 
@@ -499,16 +540,30 @@ function JournalEntryRow({ entry }: { entry: IncomeEntry }) {
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {entry.invoiceRef && (
-              <span className="text-muted text-[10px]">{entry.invoiceRef}</span>
-            )}
+            {entry.invoiceRef && <span className="text-muted text-[10px]">{entry.invoiceRef}</span>}
             <span className="text-muted text-[10px]">·</span>
             <span className="text-muted text-[10px]">{nature}</span>
             <span className="text-muted text-[10px]">·</span>
             <span className="text-muted text-[10px]">{paymentLabel}</span>
           </div>
         </div>
-        <span className="text-text font-bold tabular-nums text-sm shrink-0">{formatEur(entry.grossAmount)}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-text font-bold tabular-nums text-sm">{formatEur(entry.grossAmount)}</span>
+          <button onClick={() => router.push(`/income/edit/${entry.id}`)} className="text-muted">
+            <Pencil size={13} />
+          </button>
+          {deleteStep === 0 ? (
+            <button onClick={() => setDeleteStep(1)} className="text-muted">
+              <Trash2 size={13} />
+            </button>
+          ) : (
+            <button onClick={() => deleteEntry(entry.id)}
+              className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.35)' }}>
+              Supprimer ?
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

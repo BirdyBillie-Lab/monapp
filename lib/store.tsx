@@ -14,8 +14,11 @@ const defaultState: AppState = {
 interface StoreContextValue extends AppState {
   saveProfile: (profile: UserProfile) => void;
   addEntry: (entry: IncomeEntry) => void;
+  updateEntry: (entry: IncomeEntry) => void;
   deleteEntry: (id: string) => void;
   addClient: (client: Client) => void;
+  updateClient: (client: Client) => void;
+  deleteClient: (id: string) => void;
   isLoaded: boolean;
 }
 
@@ -30,62 +33,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<AppState>;
-        setState({
-          ...defaultState,
-          ...parsed,
-          clients: parsed.clients ?? [],
-        });
+        setState({ ...defaultState, ...parsed, clients: parsed.clients ?? [] });
       }
-    } catch {
-      // ignore parse errors
-    }
+    } catch { /* ignore */ }
     setIsLoaded(true);
   }, []);
 
   const persist = useCallback((next: AppState) => {
     setState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // ignore storage errors
-    }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
   }, []);
 
-  const saveProfile = useCallback(
-    (profile: UserProfile) => {
-      persist({ ...state, profile });
-    },
-    [state, persist]
-  );
-
-  const addEntry = useCallback(
-    (entry: IncomeEntry) => {
-      const entries = [entry, ...state.entries];
-      persist({ ...state, entries });
-    },
-    [state, persist]
-  );
-
-  const deleteEntry = useCallback(
-    (id: string) => {
-      const entries = state.entries.filter((e) => e.id !== id);
-      persist({ ...state, entries });
-    },
-    [state, persist]
-  );
-
-  const addClient = useCallback(
-    (client: Client) => {
-      const clients = [client, ...state.clients];
-      persist({ ...state, clients });
-    },
-    [state, persist]
-  );
+  const saveProfile  = useCallback((profile: UserProfile) => persist({ ...state, profile }), [state, persist]);
+  const addEntry     = useCallback((entry: IncomeEntry)   => persist({ ...state, entries: [entry, ...state.entries] }), [state, persist]);
+  const updateEntry  = useCallback((entry: IncomeEntry)   => persist({ ...state, entries: state.entries.map(e => e.id === entry.id ? entry : e) }), [state, persist]);
+  const deleteEntry  = useCallback((id: string)           => persist({ ...state, entries: state.entries.filter(e => e.id !== id) }), [state, persist]);
+  const addClient    = useCallback((client: Client)       => persist({ ...state, clients: [client, ...state.clients] }), [state, persist]);
+  const updateClient = useCallback((client: Client)       => persist({ ...state, clients: state.clients.map(c => c.id === client.id ? client : c) }), [state, persist]);
+  const deleteClient = useCallback((id: string)           => persist({ ...state, clients: state.clients.filter(c => c.id !== id) }), [state, persist]);
 
   return (
-    <StoreContext.Provider
-      value={{ ...state, saveProfile, addEntry, deleteEntry, addClient, isLoaded }}
-    >
+    <StoreContext.Provider value={{ ...state, saveProfile, addEntry, updateEntry, deleteEntry, addClient, updateClient, deleteClient, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );
