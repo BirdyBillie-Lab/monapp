@@ -136,7 +136,7 @@ export default function DashboardPage() {
     daysLeftMonth, monthName, recentEntries,
   } = data;
 
-  const greeting    = profile.name ? `Bonjour, ${profile.name}` : 'Bonjour';
+  const greetingName = profile.name ?? null;
   const deadlineFmt = deadline.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
   const dlColor     = daysLeft <= 7 ? '#EF4444' : daysLeft <= 14 ? '#F59E0B' : '#22C55E';
   const bellActive  = notifPerm === 'granted';
@@ -148,7 +148,11 @@ export default function DashboardPage() {
         {/* Greeting + bell */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-text text-2xl font-bold">{greeting}</p>
+            <p className="text-text text-2xl font-bold">
+              {greetingName
+                ? <>Bonjour, <span style={{ color: '#A78BFA' }}>{greetingName}</span></>
+                : 'Bonjour'}
+            </p>
             <p className="text-muted text-sm capitalize">{monthName} {now.getFullYear()}</p>
           </div>
           <button onClick={handleBell}
@@ -213,6 +217,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Recent entries */}
+        {recentEntries.length > 0 && (
+          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <p className="text-muted text-xs uppercase tracking-widest">Derniers encaissements</p>
+              <Link href="/mes-recettes" className="text-purple-light text-[11px] font-medium">
+                Voir tout →
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {recentEntries.map(entry => (
+                <RecentEntryRow key={entry.id} entry={entry} onEdit={() => router.push(`/income/edit/${entry.id}`)} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Monthly objective */}
         {objective > 0 ? (
           <div className="bg-surface border border-border rounded-2xl p-5">
@@ -255,23 +276,6 @@ export default function DashboardPage() {
             </div>
             <ChevronRight size={18} className="text-muted" />
           </Link>
-        )}
-
-        {/* Recent entries */}
-        {recentEntries.length > 0 && (
-          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-              <p className="text-muted text-xs uppercase tracking-widest">Derniers encaissements</p>
-              <Link href="/mes-recettes" className="text-purple-light text-[11px] font-medium">
-                Voir tout →
-              </Link>
-            </div>
-            <div className="divide-y divide-border">
-              {recentEntries.map(entry => (
-                <RecentEntryRow key={entry.id} entry={entry} onEdit={() => router.push(`/income/edit/${entry.id}`)} />
-              ))}
-            </div>
-          </div>
         )}
 
         {/* Motivational message */}
