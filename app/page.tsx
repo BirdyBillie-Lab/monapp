@@ -113,7 +113,7 @@ export default function Home() {
           </div>
 
           {/* Lighthouse */}
-          <div className="w-48 h-64 md:w-72 md:h-96 shrink-0">
+          <div className="relative w-64 h-80 md:w-96 md:h-[480px] shrink-0">
             <Image
               src="/Lighthouse.png"
               alt=""
@@ -122,6 +122,8 @@ export default function Home() {
               className="w-full h-full object-contain"
               priority
             />
+            <div className="absolute inset-0 pointer-events-none rounded-2xl"
+              style={{ background: 'rgba(8,8,24,0.25)' }} />
           </div>
         </div>
       </section>
